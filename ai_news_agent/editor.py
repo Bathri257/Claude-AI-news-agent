@@ -38,7 +38,32 @@ STORY_FIELDS = {
     "india": '"tamil_nadu", "india" or "none"',
     "companies": "list of the main organisations involved, short names, most important first",
     "candidate_id": 'id from candidates.json, or "web" if you found it yourself',
+    "search_terms": '2-5 words people would use when discussing it, e.g. "Gemini 3.5 Flash", "Sarvam M2"',
 }
+
+REACTION_SHAPE = """"reactions": {
+        "pulse": <one or two sentences (max 35 words) on what users are saying, or "" if no real discussion>,
+        "sentiment": <"positive", "mixed", "negative" or "none">,
+        "reviews": [   // 0 to 3
+          {"platform": <"Reddit" or "Hacker News">, "community": <e.g. "r/LocalLLaMA">,
+           "quote": <EXACT excerpt copied from the comment text, max 40 words; use … between cut parts>,
+           "takeaway": <your plain-English gist of the comment, max 20 words>,
+           "link": <the comment's link exactly as in reactions.json>, "score": <its score>}
+        ]
+      }"""
+
+
+def review_rules() -> str:
+    return """USER REVIEWS (the "What people say" tab)
+- For each story, read the real comments collected in reactions.json and pick up to 3 that are
+  genuine: first-hand use or testing ("I tried it on…", "we switched our team to…"), informed
+  criticism, or concrete expert insight. Prefer different viewpoints (one positive, one critical).
+- Skip jokes, memes, one-liners, insults, spam, self-promotion, off-topic replies and anything
+  that only repeats the article. Never quote personal information.
+- Quotes must be copied exactly from the comment (you may cut with "…"). Never write a review
+  yourself and never paraphrase inside "quote". The checker compares quotes with the source.
+- If no genuine discussion exists (common for policy or regional news), use an empty reviews
+  list, pulse "", sentiment "none". That is better than a weak review."""
 
 
 def rules() -> str:
@@ -79,8 +104,9 @@ def _schema_text() -> str:
 
 # ---------------------------------------------------------------- validation
 
-def check(stories: list[dict], candidates: list[dict]) -> tuple[list[str], list[str]]:
+def check(stories: list[dict], candidates: list[dict], reactions: dict | None = None) -> tuple[list[str], list[str]]:
     """Return (errors, warnings) for a draft."""
+    from .reactions import verify_review
     errors, warnings = [], []
     n = len(stories)
     if not config.MIN_STORIES <= n <= config.MAX_STORIES:
@@ -107,6 +133,14 @@ def check(stories: list[dict], candidates: list[dict]) -> tuple[list[str], list[
         if s["companies"]:
             c = str(s["companies"][0]).lower()
             per_company[c] = per_company.get(c, 0) + 1
+        if reactions is not None and "reactions" in s:
+            reviews = (s["reactions"] or {}).get("reviews", [])
+            if len(reviews) > 3:
+                errors.append(f"{label}: at most 3 reviews.")
+            for r in reviews:
+                problem = verify_review(r, i, reactions)
+                if problem:
+                    errors.append(f"{label}: review {r.get('link', '?')} is invalid: {problem}.")
     for c, k in per_company.items():
         if k > config.MAX_PER_COMPANY:
             errors.append(f"{k} stories are mainly about {c!r}; at most {config.MAX_PER_COMPANY} allowed.")
@@ -144,7 +178,10 @@ def repair(stories: list[dict]) -> list[dict]:
             continue
         if s["link"] in links:
             continue
+        reactions = s.get("reactions")
         s = {k: s.get(k, "" if k != "companies" else []) for k in STORY_FIELDS}
+        if reactions:
+            s["reactions"] = reactions
         s["summary"] = _trim(" ".join(str(s["summary"]).split()))
         if s["category"] not in CATEGORIES:
             s["category"] = "Industry & Products"
@@ -163,6 +200,28 @@ def repair(stories: list[dict]) -> list[dict]:
     return out[: config.MAX_STORIES]
 
 
+def _load_reactions() -> dict | None:
+    from .reactions import REACTIONS
+    try:
+        return json.loads(REACTIONS.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+
+
+def clean_reviews(stories: list[dict], reactions: dict | None) -> None:
+    """Drop any review that does not match a collected comment (by original story number)."""
+    from .reactions import verify_review
+    for i, s in enumerate(stories, 1):
+        r = s.get("reactions")
+        if not isinstance(r, dict):
+            s.pop("reactions", None)
+            continue
+        r["reviews"] = [x for x in r.get("reviews", [])[:3]
+                        if reactions is not None and verify_review(x, i, reactions) is None]
+        if not r["reviews"] and not r.get("pulse"):
+            r["sentiment"] = "none"
+
+
 def cmd_check() -> int:
     """Used by Claude Code during its session: prints OK or the problems to fix."""
     try:
@@ -172,7 +231,10 @@ def cmd_check() -> int:
         print(f"ERROR: could not read {DRAFT.relative_to(config.ROOT)} as JSON with a 'stories' list: {exc}")
         return 1
     candidates = json.loads(CANDIDATES.read_text())
-    errors, warnings = check(stories, candidates)
+    reactions = _load_reactions()
+    errors, warnings = check(stories, candidates, reactions)
+    if reactions is None:
+        warnings.append("reactions.json not found yet: run python -m ai_news_agent reactions, then add reviews.")
     for e in errors:
         print("ERROR:", e)
     for w in warnings:
@@ -199,6 +261,8 @@ def _claude_code() -> list[dict] | None:
 
 {rules()}
 
+{review_rules()}
+
 FILES
 - {work}/candidates.json: ~{config.SHORTLIST_SIZE} candidate stories gathered in the last day from about
   45 news sources and de-duplicated by code. Fields: id, title, source, link, published, coverage
@@ -214,21 +278,31 @@ STEPS
    and set candidate_id to "web".
 3. If a chosen candidate's text is too thin to summarise accurately, you may WebFetch its link
    (only a few times).
-4. Write {work}/draft.json in exactly this shape:
+4. Write {work}/draft.json in exactly this shape (no "reactions" yet):
 {_schema_text()}
-5. Run: python -m ai_news_agent check
+5. Run: python -m ai_news_agent reactions
+   This searches Reddit and Hacker News for each story (using your search_terms and links) and
+   writes {work}/reactions.json: real user comments keyed by story number (1 = first story).
+   It can take a few minutes; run it with a 10-minute timeout.
+6. Read reactions.json and add to EVERY story in draft.json:
+      {REACTION_SHAPE}
+7. Run: python -m ai_news_agent check
    Fix every ERROR in draft.json and run it again until it prints OK. Consider each WARNING.
-6. Reply with one line: how many stories you wrote."""
+8. Reply with one line: how many stories and how many reviews you wrote."""
 
     cmd = [exe, "-p", prompt, "--permission-mode", "dontAsk", "--output-format", "json",
            "--allowedTools", "Read", "Write(./data/work/**)", "Edit(./data/work/**)",
-           "WebSearch", "WebFetch", "Bash(python -m ai_news_agent check)"]
+           "WebSearch", "WebFetch", "Bash(python -m ai_news_agent check)",
+           "Bash(python -m ai_news_agent reactions)"]
     if config.CLAUDE_CODE_MODEL:
         cmd += ["--model", config.CLAUDE_CODE_MODEL]
     DRAFT.unlink(missing_ok=True)
+    from .reactions import REACTIONS
+    REACTIONS.unlink(missing_ok=True)
     log.info("Running Claude Code editor session…")
+    env = {**os.environ, "BASH_DEFAULT_TIMEOUT_MS": "600000", "BASH_MAX_TIMEOUT_MS": "900000"}
     try:
-        result = subprocess.run(cmd, cwd=config.ROOT, capture_output=True, text=True,
+        result = subprocess.run(cmd, cwd=config.ROOT, env=env, capture_output=True, text=True,
                                 timeout=config.CLAUDE_TIMEOUT_MIN * 60)
     except subprocess.TimeoutExpired:
         log.error("Claude Code timed out after %d minutes", config.CLAUDE_TIMEOUT_MIN)
@@ -298,12 +372,28 @@ def edit(candidates: list[dict], recent: str) -> tuple[list[dict], str]:
     for name, run in (("claude-code", _claude_code), ("gemini", lambda: _gemini(candidates, recent))):
         stories = run()
         if stories:
+            clean_reviews(stories, _load_reactions() if name == "claude-code" else None)
             errors, warnings = check(stories, candidates)
             for msg in errors + warnings:
                 log.info("%s draft: %s", name, msg)
             fixed = repair(stories)
             if len(fixed) >= min(config.MIN_STORIES, len(candidates)) // 2:
+                _ensure_reactions(fixed)
                 return fixed, name
             log.warning("%s draft unusable after repair (%d stories)", name, len(fixed))
     log.warning("No AI editor available; using extracts")
-    return repair(_extractive(candidates)), "extractive"
+    fixed = repair(_extractive(candidates))
+    _ensure_reactions(fixed)
+    return fixed, "extractive"
+
+
+def _ensure_reactions(stories: list[dict]) -> None:
+    """Stories the AI editor didn't review get the top-voted real comments, marked as auto-picked."""
+    from .reactions import auto_pick, gather
+    missing = [s for s in stories if "reactions" not in s]
+    if not missing:
+        return
+    try:
+        auto_pick(missing, gather(missing))
+    except Exception as exc:
+        log.warning("Collecting user reactions failed: %s", exc)

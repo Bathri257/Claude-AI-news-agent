@@ -14,56 +14,77 @@ from .site import _pretty_date, split_sections
 log = logging.getLogger(__name__)
 
 
+SERIF = "Georgia,'Times New Roman',serif"
+SANS = "-apple-system,'Segoe UI',Roboto,Arial,sans-serif"
+
+
 def _html(digest: dict) -> str:
     rows = []
     for section, stories in split_sections(digest["stories"]):
         rows.append(
-            '<tr><td style="padding:26px 0 0;font-size:12px;color:#888;letter-spacing:.1em;'
-            f'text-transform:uppercase;border-bottom:2px solid #111">{escape(section)}</td></tr>'
-        )
-        rows.extend(_story_row(s) for s in stories)
+            f'<tr><td style="padding:30px 0 4px;font:700 12px {SANS};letter-spacing:2px;text-transform:uppercase;'
+            f'color:#b4441c;border-bottom:1px solid #e3d9c8">{escape(section)}</td></tr>')
+        rows.extend(_story_row(n, s) for n, s in stories)
     return _wrap(digest, rows)
 
 
-def _story_row(s: dict) -> str:
-    tn = (' <span style="background:#fff3e0;color:#b45309;border-radius:4px;padding:1px 6px">TAMIL NADU</span>'
+def _story_row(n: int, s: dict) -> str:
+    tn = (' &nbsp;<span style="background:#fbecc8;color:#8a5a00;border-radius:3px;padding:1px 6px">TAMIL NADU</span>'
           if s.get("india") == "tamil_nadu" else "")
-    meta = " · ".join(escape(x) for x in (s.get("technology"), s.get("region"), s["source"]) if x)
+    kicker = " · ".join(escape(x) for x in (s["category"], s.get("technology")) if x)
+    r = s.get("reactions") or {}
+    talk = ""
+    if r.get("pulse") or r.get("reviews"):
+        gist = escape(r.get("pulse") or f"{len(r['reviews'])} comments from Reddit / Hacker News")
+        more = (f' <a href="{escape(config.SITE_URL)}/#people-{n}" style="color:#b4441c">Read what they say →</a>'
+                if config.SITE_URL else "")
+        talk = (f'<div style="margin-top:10px;padding:10px 12px;background:#f7f2e8;border-radius:4px 12px 12px 12px;'
+                f'font:italic 15px/1.5 {SERIF};color:#5a4f47">💬 People are saying: {gist}{more}</div>')
     return f"""
-<tr><td style="padding:18px 0;border-bottom:1px solid #e6e6e6">
-<div style="font-size:12px;color:#4f46e5;font-weight:700;text-transform:uppercase;letter-spacing:.04em">{escape(s['category'])}{tn}</div>
-<div style="font-size:12px;color:#777;margin:2px 0 6px">{meta}</div>
-<div style="font-size:18px;font-weight:700;line-height:1.35;color:#111;margin-bottom:6px">{escape(s['headline'])}</div>
-<div style="font-size:15px;line-height:1.6;color:#333">{escape(s['summary'])}</div>
-<div style="margin-top:8px"><a href="{escape(s['link'])}" style="color:#4f46e5;font-weight:700;text-decoration:none">Read the full story →</a></div>
+<tr><td style="padding:22px 0;border-bottom:1px solid #e3d9c8">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+<td valign="top" width="40" style="font:600 22px/1.2 {SERIF};color:#b8ab9d">{n:02d}</td>
+<td valign="top">
+<div style="font:700 11px {SANS};letter-spacing:1px;text-transform:uppercase;color:#b4441c">{kicker}{tn}</div>
+<div style="font:700 21px/1.3 {SERIF};color:#2a2420;margin:6px 0 8px">{escape(s['headline'])}</div>
+<div style="font:17px/1.6 {SERIF};color:#3b332d">{escape(s['summary'])}</div>
+<div style="margin-top:10px;font:13px {SANS};color:#6b6058">{escape(s['source'])} &nbsp;·&nbsp;
+<a href="{escape(s['link'])}" style="color:#b4441c;font-weight:700;text-decoration:none">Read the full story →</a></div>
+{talk}
+</td></tr></table>
 </td></tr>"""
 
 
 def _wrap(digest: dict, rows: list[str]) -> str:
-    site = (
-        f'<p style="margin:24px 0 0;font-size:13px;color:#777">Browse on the web: '
-        f'<a href="{escape(config.SITE_URL)}" style="color:#4f46e5">{escape(config.SITE_URL)}</a></p>'
-        if config.SITE_URL else ""
-    )
-    return f"""<!doctype html><html><body style="margin:0;background:#f4f4f2">
+    site = (f'<a href="{escape(config.SITE_URL)}" style="color:#b4441c">Open today\'s edition on the web</a> · '
+            if config.SITE_URL else "")
+    n = len(digest["stories"])
+    return f"""<!doctype html><html><body style="margin:0;background:#f7f2e8">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
-<table role="presentation" width="100%" style="max-width:640px;background:#fff;border-radius:12px;padding:8px 24px 24px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif">
-<tr><td style="padding:20px 0 4px"><div style="font-size:24px;font-weight:800;color:#111">AI Daily Brief</div>
-<div style="font-size:14px;color:#777">{_pretty_date(digest['date'])} · {len(digest['stories'])} stories</div></td></tr>
-{''.join(rows) or '<tr><td style="padding:20px 0;color:#777">No new stories today.</td></tr>'}
-<tr><td>{site}</td></tr></table></td></tr></table></body></html>"""
+<table role="presentation" width="100%" style="max-width:640px;background:#fffdf8;border:1px solid #e3d9c8;padding:8px 26px 26px">
+<tr><td style="text-align:center;padding:22px 0 12px;border-bottom:3px double #2a2420">
+<div style="font:italic 16px {SERIF};color:#6b6058">Good morning. Here's what happened in AI while you slept.</div>
+<div style="font:700 40px/1.1 {SERIF};color:#2a2420;margin:6px 0">The Morning Brief</div>
+<div style="font:600 11px {SANS};letter-spacing:1.5px;text-transform:uppercase;color:#6b6058">
+{_pretty_date(digest['date'])} &nbsp;·&nbsp; {n} stories</div></td></tr>
+{''.join(rows) or f'<tr><td style="padding:24px 0;font:italic 17px {SERIF};color:#6b6058">A quiet day. Nothing worth your time.</td></tr>'}
+<tr><td style="padding-top:22px;font:13px/1.6 {SANS};color:#8a7f75;text-align:center">
+{site}Have a good day ☕</td></tr></table></td></tr></table></body></html>"""
 
 
 def _text(digest: dict) -> str:
-    parts = [f"AI Daily Brief — {_pretty_date(digest['date'])}\n"]
-    i = 0
+    parts = [f"THE MORNING BRIEF · {_pretty_date(digest['date'])}",
+             "Good morning. Here's what happened in AI while you slept.\n"]
     for section, stories in split_sections(digest["stories"]):
         parts.append(f"== {section.upper()} ==\n")
-        for s in stories:
-            i += 1
-            parts.append(f"{i}. [{s['category']}] {s['headline']}\n{s['summary']}\nRead more: {s['link']}\n")
+        for n, s in stories:
+            parts.append(f"{n:02d}. {s['headline']}\n{s['summary']}\nRead more: {s['link']}")
+            pulse = (s.get("reactions") or {}).get("pulse")
+            if pulse:
+                parts.append(f"People are saying: {pulse}")
+            parts.append("")
     if config.SITE_URL:
-        parts.append(f"Website: {config.SITE_URL}")
+        parts.append(f"On the web (with 'What People Say'): {config.SITE_URL}")
     return "\n".join(parts)
 
 
@@ -75,8 +96,8 @@ def send_digest(digest: dict) -> None:
     port = int(os.getenv("SMTP_PORT") or 465)
 
     msg = EmailMessage()
-    msg["Subject"] = f"AI Daily Brief · {_pretty_date(digest['date'])} · {len(digest['stories'])} stories"
-    msg["From"] = f"AI Daily Brief <{user}>"
+    msg["Subject"] = f"☕ The Morning Brief · {_pretty_date(digest['date'])} · {len(digest['stories'])} AI stories"
+    msg["From"] = f"The Morning Brief <{user}>"
     msg["To"] = to
     msg.set_content(_text(digest))
     msg.add_alternative(_html(digest), subtype="html")

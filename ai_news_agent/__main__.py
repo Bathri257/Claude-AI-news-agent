@@ -19,6 +19,7 @@ from datetime import datetime
 from . import config
 from .collect import collect_new, normalize_link
 from .editor import cmd_check, edit
+from .reactions import cmd_reactions
 from .emailer import send_digest
 from .shortlist import cluster, shortlist
 from .site import build_site
@@ -134,6 +135,7 @@ def main() -> int:
     d = sub.add_parser("daily")
     d.add_argument("--force", action="store_true", help="rebuild today's digest")
     sub.add_parser("check")
+    sub.add_parser("reactions")
     e = sub.add_parser("email")
     e.add_argument("--wait", action="store_true", help="wait for the configured send time")
     sub.add_parser("site")
@@ -142,6 +144,9 @@ def main() -> int:
     if args.cmd == "check":
         logging.disable(logging.CRITICAL)
         return cmd_check()
+    if args.cmd == "reactions":
+        logging.disable(logging.INFO)
+        return cmd_reactions()
     if args.cmd == "daily":
         cmd_daily(args.force)
     elif args.cmd == "email":

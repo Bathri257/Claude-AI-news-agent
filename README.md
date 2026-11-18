@@ -1,6 +1,10 @@
-# AI Daily Brief: your personal AI news agent
+# The Morning Brief: your personal AI news agent
 
 Every morning at **8 AM IST** you get an email with the **15–20 most useful AI developments from around the world**. Each one has a headline, its essence in **60–100 words**, and a **"Read the full story →" link** if you want to go deeper. There's a dedicated **India & Tamil Nadu** section. The same brief is published on a small website with filters and an archive.
+
+**Two ways to read every story:**
+- **The News:** headline, 60–100 word essence, link to the full article.
+- **What People Say:** for the same story numbers, up to 3 genuine comments from people who actually used or tested the thing (Reddit, Hacker News). Each comes with a one-line "pulse" and a sentiment (*Mostly positive / Mixed feelings / Skeptical / Quiet so far*). Every quote is copied word for word and linked; code checks each one against the original comment, so nothing can be made up.
 
 **Cost: ₹0 extra.** It runs on free GitHub Actions and free news sources, and the one AI step uses the **Claude Pro subscription you already have**.
 
@@ -15,7 +19,10 @@ Every morning at **8 AM IST** you get an email with the **15–20 most useful AI
        - reads the shortlist (and may do up to 5 web searches for big stories the feeds missed)
        - picks 15–20 stories by your rules, writes headline + 60–100 word essence + link
        - runs `python -m ai_news_agent check` and fixes anything that breaks the rules
-  4. Code re-checks everything, saves the digest, rebuilds the website
+       - runs `python -m ai_news_agent reactions` to collect real Reddit / Hacker News comments
+         on each chosen story, and picks up to 3 genuine ones (hands-on use, informed criticism),
+         skipping jokes, spam and self-promotion
+  4. Code re-checks everything (incl. that each quote really exists), saves, rebuilds the website
 
 8:00 AM IST  send-email.yml  → emails the brief (builds it on the spot if the 4 AM run failed)
 ```
@@ -36,6 +43,16 @@ About 40 RSS feeds and Google News searches, plus GDELT (worldwide news database
 - **Tamil Nadu:** The Hindu Tamil Nadu, Times of India Chennai, and searches for Chennai, Coimbatore, Madurai, IIT Madras and AI news in Tamil.
 
 Edit `ai_news_agent/sources.py` to add or remove sources.
+
+### Where the user reviews come from
+| Platform | Works? | Notes |
+|---|---|---|
+| **Hacker News** | ✅ free, no key | developers trying new tools, often hands-on |
+| **Reddit** | ✅ free | best with a free personal app key (below). Without one it tries Reddit's public pages, which Reddit often blocks for cloud servers |
+| Discord | ❌ | conversations are inside login-only servers. Reading them automatically breaks Discord's rules |
+| X / Twitter | ❌ | its API is paid |
+
+Some stories, especially policy and regional ones, have no real discussion yet. They're listed as "Quiet so far" rather than padded with weak comments.
 
 ## One-time setup (about 10 minutes)
 
@@ -58,6 +75,7 @@ Edit `ai_news_agent/sources.py` to add or remove sources.
    | `SMTP_PASSWORD` | the Gmail app password |
    | `EMAIL_TO` | where to deliver (comma-separate several) |
    | `GEMINI_API_KEY` | *optional* free backup key from aistudio.google.com |
+   | `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | *recommended* for Reddit reviews: log in to Reddit → reddit.com/prefs/apps → "create another app" → type **script**, any name, redirect URI `http://localhost` → the ID is under the app name, the secret is labelled "secret" |
 
 5. **Website:** Settings → Pages → Deploy from a branch → `main` / `/docs`. Add the *variable* `SITE_URL` = `https://<username>.github.io/<repo>/`.
 6. **Test:** Actions → "Daily AI digest" → Run workflow. When it finishes, Actions → "Email AI digest" → Run workflow.

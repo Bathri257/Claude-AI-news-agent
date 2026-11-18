@@ -29,6 +29,8 @@ env:
   # Only used if the 4 AM run failed and the digest must be built now:
   CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
   GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+  REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
   CLAUDE_CODE_MODEL: ${{ vars.CLAUDE_CODE_MODEL }}
   GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
   MAX_STORIES: ${{ vars.MAX_STORIES }}
