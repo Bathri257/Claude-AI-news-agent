@@ -10,7 +10,17 @@ DOCS_DIR = ROOT / "docs"
 
 TIMEZONE = ZoneInfo(os.getenv("DIGEST_TIMEZONE") or "Asia/Kolkata")
 MODEL = os.getenv("CLAUDE_MODEL") or "claude-opus-5-5"
-MAX_STORIES = int(os.getenv("MAX_STORIES") or 12)
+# Model for the frequent scan/triage calls. Set to "claude-haiku-5-5" to cut cost.
+TRIAGE_MODEL = os.getenv("TRIAGE_MODEL") or MODEL
+
+# Final digest size and diversity rules.
+MAX_STORIES = int(os.getenv("MAX_STORIES") or 20)
+MIN_STORIES = int(os.getenv("MIN_STORIES") or 15)
+MAX_PER_COMPANY = int(os.getenv("MAX_PER_COMPANY") or 2)
+INDIA_SHARE = float(os.getenv("INDIA_SHARE") or 0.3)  # target share of India / Tamil Nadu stories
+MIN_TAMIL_NADU = int(os.getenv("MIN_TAMIL_NADU") or 2)  # if worthwhile ones exist
+
+# How far back the first scan looks (later scans only add what is new).
 LOOKBACK_HOURS = int(os.getenv("LOOKBACK_HOURS") or 30)
 SITE_URL = (os.getenv("SITE_URL") or "").rstrip("/")
 

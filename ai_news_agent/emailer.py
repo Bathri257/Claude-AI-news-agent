@@ -9,23 +9,37 @@ from email.message import EmailMessage
 from html import escape
 
 from . import config
-from .site import _pretty_date
+from .site import _pretty_date, split_sections
 
 log = logging.getLogger(__name__)
 
 
 def _html(digest: dict) -> str:
     rows = []
-    for s in digest["stories"]:
-        meta = " · ".join(escape(x) for x in (s.get("technology"), s.get("region"), s["source"]) if x)
-        rows.append(f"""
+    for section, stories in split_sections(digest["stories"]):
+        rows.append(
+            '<tr><td style="padding:26px 0 0;font-size:12px;color:#888;letter-spacing:.1em;'
+            f'text-transform:uppercase;border-bottom:2px solid #111">{escape(section)}</td></tr>'
+        )
+        rows.extend(_story_row(s) for s in stories)
+    return _wrap(digest, rows)
+
+
+def _story_row(s: dict) -> str:
+    tn = (' <span style="background:#fff3e0;color:#b45309;border-radius:4px;padding:1px 6px">TAMIL NADU</span>'
+          if s.get("india") == "tamil_nadu" else "")
+    meta = " · ".join(escape(x) for x in (s.get("technology"), s.get("region"), s["source"]) if x)
+    return f"""
 <tr><td style="padding:18px 0;border-bottom:1px solid #e6e6e6">
-<div style="font-size:12px;color:#4f46e5;font-weight:700;text-transform:uppercase;letter-spacing:.04em">{escape(s['category'])}</div>
+<div style="font-size:12px;color:#4f46e5;font-weight:700;text-transform:uppercase;letter-spacing:.04em">{escape(s['category'])}{tn}</div>
 <div style="font-size:12px;color:#777;margin:2px 0 6px">{meta}</div>
 <div style="font-size:18px;font-weight:700;line-height:1.35;color:#111;margin-bottom:6px">{escape(s['headline'])}</div>
 <div style="font-size:15px;line-height:1.6;color:#333">{escape(s['summary'])}</div>
 <div style="margin-top:8px"><a href="{escape(s['link'])}" style="color:#4f46e5;font-weight:700;text-decoration:none">Read the full story →</a></div>
-</td></tr>""")
+</td></tr>"""
+
+
+def _wrap(digest: dict, rows: list[str]) -> str:
     site = (
         f'<p style="margin:24px 0 0;font-size:13px;color:#777">Browse on the web: '
         f'<a href="{escape(config.SITE_URL)}" style="color:#4f46e5">{escape(config.SITE_URL)}</a></p>'
@@ -42,8 +56,12 @@ def _html(digest: dict) -> str:
 
 def _text(digest: dict) -> str:
     parts = [f"AI Daily Brief — {_pretty_date(digest['date'])}\n"]
-    for i, s in enumerate(digest["stories"], 1):
-        parts.append(f"{i}. [{s['category']}] {s['headline']}\n{s['summary']}\nRead more: {s['link']}\n")
+    i = 0
+    for section, stories in split_sections(digest["stories"]):
+        parts.append(f"== {section.upper()} ==\n")
+        for s in stories:
+            i += 1
+            parts.append(f"{i}. [{s['category']}] {s['headline']}\n{s['summary']}\nRead more: {s['link']}\n")
     if config.SITE_URL:
         parts.append(f"Website: {config.SITE_URL}")
     return "\n".join(parts)

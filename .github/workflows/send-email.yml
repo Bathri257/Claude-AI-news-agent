@@ -38,7 +38,14 @@ jobs:
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           SMTP_HOST: ${{ vars.SMTP_HOST }}
           SMTP_PORT: ${{ vars.SMTP_PORT }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          TRIAGE_MODEL: ${{ vars.TRIAGE_MODEL }}
           DIGEST_TIMEZONE: ${{ vars.DIGEST_TIMEZONE }}
+          MAX_STORIES: ${{ vars.MAX_STORIES }}
+          MIN_STORIES: ${{ vars.MIN_STORIES }}
+          MAX_PER_COMPANY: ${{ vars.MAX_PER_COMPANY }}
+          INDIA_SHARE: ${{ vars.INDIA_SHARE }}
+          MIN_TAMIL_NADU: ${{ vars.MIN_TAMIL_NADU }}
           SITE_URL: ${{ vars.SITE_URL }}
         run: python -m ai_news_agent email ${{ (github.event_name == 'schedule' || inputs.wait) && '--wait' || '' }}
       - name: Commit digest if it had to be built now

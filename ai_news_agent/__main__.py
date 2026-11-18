@@ -1,9 +1,10 @@
 """CLI entry point.
 
-  python -m ai_news_agent fetch        # collect + summarise + rebuild website (4 AM job)
-  python -m ai_news_agent email        # email today's digest (8 AM job)
-  python -m ai_news_agent email --wait # sleep until SEND_HOUR:SEND_MINUTE local time first
-  python -m ai_news_agent site         # rebuild the website from saved digests
+  python -m ai_news_agent scan          # gather + triage new articles into the pool (every 4 hours)
+  python -m ai_news_agent fetch         # final scan, pick the top 15-20, summarise, build site (4 AM)
+  python -m ai_news_agent email         # email today's digest (8 AM)
+  python -m ai_news_agent email --wait  # sleep until SEND_HOUR:SEND_MINUTE local time first
+  python -m ai_news_agent site          # rebuild the website from saved digests
 """
 from __future__ import annotations
 
@@ -12,27 +13,32 @@ import json
 import logging
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from . import config
-from .collect import collect_candidates, fetch_full_text, normalize_link
+from . import config, pool as pool_mod
+from .collect import collect_new
+from .curate import curate
 from .emailer import send_digest
 from .site import build_site
-from .summarize import build_stories
+from .summarize import summarize
+from .triage import triage
 
 log = logging.getLogger("ai_news_agent")
-SEEN_FILE = config.DATA_DIR / "seen.json"
 
 
 def _digest_path(date: str):
     return config.DATA_DIR / f"digest-{date}.json"
 
 
-def _load_seen() -> dict[str, str]:
-    try:
-        return json.loads(SEEN_FILE.read_text())
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+def cmd_scan(pool: dict | None = None) -> dict:
+    pool = pool or pool_mod.load()
+    articles = collect_new(set(pool["seen_links"]), config.LOOKBACK_HOURS)
+    before = len(pool["stories"])
+    method = triage(pool, articles)
+    pool_mod.save(pool)
+    log.info("Scan: %d new articles -> %d new stories (%s); %d candidates in today's window",
+             len(articles), len(pool["stories"]) - before, method, len(pool_mod.window(pool)))
+    return pool
 
 
 def cmd_fetch(force: bool = False) -> dict:
@@ -42,29 +48,39 @@ def cmd_fetch(force: bool = False) -> dict:
         log.info("Digest for %s already exists", date)
         return json.loads(path.read_text())
 
-    config.DATA_DIR.mkdir(exist_ok=True)
-    seen = _load_seen()
-    candidates = collect_candidates(set(seen))
-    stories, method = build_stories(candidates, fetch_full_text)
+    pool = pool_mod.load()
+    if force and pool.get("window_start", {}).get(date) is not None:
+        # Re-running today's digest: reopen today's window and stories.
+        pool["last_digest_at"] = pool["window_start"][date]
+        for s in pool["stories"]:
+            if s.get("used_on") == date:
+                s["status"] = "candidate"
+    pool = cmd_scan(pool)  # one last catch-up before choosing
+    candidates = pool_mod.window(pool)
+    chosen, curate_method = curate(candidates)
+    stories, summary_method = summarize(chosen)
 
     digest = {
         "date": date,
         "generated_at": datetime.now(config.TIMEZONE).isoformat(timespec="seconds"),
-        "method": method,
+        "method": {"curation": curate_method, "summaries": summary_method},
         "candidates": len(candidates),
+        "sources_seen": len({c["source"] for s in candidates for c in s["coverage"]}),
         "stories": stories,
     }
     path.write_text(json.dumps(digest, indent=2, ensure_ascii=False))
 
-    # Remember what we've covered for a week so stories don't repeat.
-    cutoff = (datetime.now(config.TIMEZONE) - timedelta(days=7)).strftime("%Y-%m-%d")
-    seen = {k: v for k, v in seen.items() if v >= cutoff}
-    for s in stories:
-        seen[normalize_link(s["link"])] = date
-    SEEN_FILE.write_text(json.dumps(seen, indent=1, sort_keys=True))
+    chosen_ids = {s["id"] for s in chosen}
+    for s in pool["stories"]:
+        if s["id"] in chosen_ids:
+            s["status"], s["used_on"] = "used", date
+    pool.setdefault("window_start", {})[date] = pool["last_digest_at"]
+    pool["window_start"] = dict(sorted(pool["window_start"].items())[-7:])
+    pool["last_digest_at"] = time.time()
+    pool_mod.save(pool)
 
     build_site()
-    log.info("Saved %d stories for %s (%s)", len(stories), date, method)
+    log.info("Saved %d stories for %s from %d candidates", len(stories), date, len(candidates))
     return digest
 
 
@@ -88,8 +104,10 @@ def cmd_email(wait: bool) -> None:
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.getLogger("trafilatura").setLevel(logging.WARNING)
     parser = argparse.ArgumentParser(prog="ai_news_agent")
     sub = parser.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("scan")
     f = sub.add_parser("fetch")
     f.add_argument("--force", action="store_true", help="rebuild today's digest")
     e = sub.add_parser("email")
@@ -97,7 +115,9 @@ def main() -> int:
     sub.add_parser("site")
     args = parser.parse_args()
 
-    if args.cmd == "fetch":
+    if args.cmd == "scan":
+        cmd_scan()
+    elif args.cmd == "fetch":
         cmd_fetch(args.force)
     elif args.cmd == "email":
         cmd_email(args.wait)

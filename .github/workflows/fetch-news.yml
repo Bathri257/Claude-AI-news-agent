@@ -29,11 +29,17 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: Fetch, summarise and build site
+      - name: Final scan, pick top stories, summarise, build site
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+          TRIAGE_MODEL: ${{ vars.TRIAGE_MODEL }}
           DIGEST_TIMEZONE: ${{ vars.DIGEST_TIMEZONE }}
           MAX_STORIES: ${{ vars.MAX_STORIES }}
+          MIN_STORIES: ${{ vars.MIN_STORIES }}
+          MAX_PER_COMPANY: ${{ vars.MAX_PER_COMPANY }}
+          INDIA_SHARE: ${{ vars.INDIA_SHARE }}
+          MIN_TAMIL_NADU: ${{ vars.MIN_TAMIL_NADU }}
           SITE_URL: ${{ vars.SITE_URL }}
         run: python -m ai_news_agent fetch ${{ inputs.force && '--force' || '' }}
       - name: Commit digest and website

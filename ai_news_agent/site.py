@@ -35,13 +35,17 @@ padding:18px 20px;margin:14px 0}
 .archive li{margin:6px 0}
 footer{margin-top:40px;color:var(--muted);font-size:13px}
 .empty{color:var(--muted);padding:40px 0}
+.section{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:30px 0 4px}
+.tn{background:#fff3e0;color:#b45309;font-weight:600;border-radius:6px;padding:1px 8px}
+@media (prefers-color-scheme:dark){.tn{background:#3a2a12;color:#f5b25b}}
 """
 
 FILTER_JS = """
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
 const c=b.dataset.cat;document.querySelectorAll('.story').forEach(s=>
-s.style.display=(c==='All'||s.dataset.cat===c)?'':'none')});
+s.style.display=(c==='All'||s.dataset.cat===c||(c==='India'&&s.dataset.india!=='none'))?'':'none');
+document.querySelectorAll('.section').forEach(h=>h.style.display=c==='All'?'':'none')});
 """
 
 
@@ -60,12 +64,23 @@ def _page(title: str, body: str, prefix: str) -> str:
 </div><script>{FILTER_JS}</script></body></html>"""
 
 
+def split_sections(stories: list[dict]) -> list[tuple[str, list[dict]]]:
+    world = [s for s in stories if s.get("india", "none") == "none"]
+    india = [s for s in stories if s.get("india", "none") != "none"]
+    india.sort(key=lambda s: s["india"] != "tamil_nadu")  # Tamil Nadu first
+    return [(t, items) for t, items in (("Around the world", world), ("India & Tamil Nadu", india)) if items]
+
+
 def _story_html(s: dict) -> str:
     meta = [f'<span class="cat">{escape(s["category"])}</span>']
+    if s.get("india") == "tamil_nadu":
+        meta.append('<span class="tn">Tamil Nadu</span>')
     for key in ("technology", "region", "source"):
         if s.get(key):
             meta.append(f"<span>{escape(s[key])}</span>")
-    return f"""<article class="story" data-cat="{escape(s['category'])}">
+    if s.get("also_covered_by"):
+        meta.append(f"<span>+{len(s['also_covered_by'])} more sources</span>")
+    return f"""<article class="story" data-cat="{escape(s['category'])}" data-india="{escape(s.get('india', 'none'))}">
 <div class="meta">{' · '.join(meta)}</div>
 <h2>{escape(s['headline'])}</h2>
 <p>{escape(s['summary'])}</p>
@@ -76,11 +91,16 @@ def _story_html(s: dict) -> str:
 def _digest_body(digest: dict) -> str:
     stories = digest["stories"]
     cats = [c for c in CATEGORIES if any(s["category"] == c for s in stories)]
+    if any(s.get("india", "none") != "none" for s in stories):
+        cats.insert(0, "India")
     chips = "".join(
         f'<button data-cat="{escape(c)}"{" class=on" if c == "All" else ""}>{escape(c)}</button>'
         for c in ["All", *cats]
     )
-    items = "\n".join(_story_html(s) for s in stories) or '<p class="empty">No stories today.</p>'
+    items = "\n".join(
+        f'<h3 class="section">{escape(title)}</h3>' + "\n".join(_story_html(s) for s in group)
+        for title, group in split_sections(stories)
+    ) or '<p class="empty">No stories today.</p>'
     return f"""<header><h1>AI Daily Brief</h1>
 <p>{_pretty_date(digest['date'])} · {len(stories)} stories from around the world</p></header>
 <nav>{chips}</nav>{items}"""

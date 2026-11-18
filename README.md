@@ -1,80 +1,87 @@
 # AI Daily Brief: your personal AI news agent
 
-An automatic agent that keeps you up to date on AI news from around the world.
+An automatic agent that follows AI news worldwide all day and emails you the **15–20 most useful updates every morning at 8 AM**. The selection mixes companies and regions and gives real space to **India and Tamil Nadu**.
 
-- **4:00 AM, while you sleep:** it pulls the last day's articles from about 24 global AI news sources (US, EU, Asia and India press, plus the labs themselves: OpenAI, Google DeepMind, Hugging Face, NVIDIA and others). It removes duplicates and non-AI news, and Claude picks the ~12 most important stories.
-- For each story, Claude writes a **60–100 word summary** (what happened, the key facts, why it matters), tags it by **technology category** (Models & LLMs, AI Agents, Robotics, Chips, Policy, …) and region, and adds a **"Read the full story →" link**. The code checks every summary's word count, and Claude rewrites any summary outside 60–100 words.
-- **8:00 AM:** the digest is emailed to you.
-- **Website:** a simple, readable page (GitHub Pages) with today's brief, category filters and an archive of every past day.
-
-It runs entirely on **GitHub Actions** (free). Nothing has to stay on overnight.
+## How it works
 
 ```
-4:00 AM  fetch-news.yml  →  RSS feeds → Claude selects + summarises → data/digest-DATE.json → docs/ website
-8:00 AM  send-email.yml  →  emails today's digest (builds it on the spot if the 4 AM run failed)
+Every 4 hours  scan-news.yml    gather new articles → sort into new / duplicate / skip → story pool
+4:00 AM        fetch-news.yml   final scan → editor picks the top 15–20 (diversity rules) → 60–100 word summaries → website
+8:00 AM        send-email.yml   emails the digest (builds it on the spot if the 4 AM run failed)
 ```
+
+1. **All-day catch-up, not a 4 AM snapshot.** Every 4 hours (8 AM, 12, 4 PM, 8 PM, midnight and 4 AM IST) the agent collects what's new since the last scan and compares it with the stories it already has:
+   - **duplicate:** the same event from another outlet. It's merged into the existing story, and more coverage counts as a sign the story matters.
+   - **skip:** opinion pieces, listicles, deals, reviews, non-AI news.
+   - **new:** scored 1–10 for importance and tagged with category, companies, region and India / Tamil Nadu relevance.
+2. **4 AM: editor's choice.** From everything gathered since yesterday's digest, it picks 15–20 stories and then applies hard rules in code:
+   - **at most 2 stories per company**, so the brief is never all NVIDIA;
+   - a mix of big labs (OpenAI, Google, Anthropic, Meta…) and **smaller firms and startups** (Sarvam AI, Mistral, new startups);
+   - about **30% India**, with **at least 2 Tamil Nadu items** when worthwhile ones exist (Chennai, Coimbatore, IIT Madras, state policy, investments, jobs, courses);
+   - a spread of technologies: models, agents, chips, robotics, policy, funding, jobs and skills…
+3. **Summaries:** each story gets a 60–100 word summary (what happened, key facts, why it matters, and any opportunity for you) plus a **"Read the full story →" link**. The code checks every word count and has Claude rewrite any summary outside the range.
+4. **Email at 8 AM** in two sections: *Around the world* and *India & Tamil Nadu*. The **website** (GitHub Pages) has the same content, with category and India filters and an archive.
+
+## News sources: all free, no API keys
+
+| Source | What it adds | Key needed? |
+|---|---|---|
+| **RSS feeds** (~25 global): TechCrunch, The Verge, MIT Tech Review, BBC, Rest of World, Sifted, SCMP, OpenAI, DeepMind, Hugging Face, NVIDIA… | global tech press and first-hand lab announcements | No |
+| **India RSS:** Economic Times Tech, The Hindu, BusinessLine, Indian Express, Inc42, YourStory, Entrackr, MediaNama, Analytics India Mag | Indian AI industry, startups, policy | No |
+| **Tamil Nadu:** The Hindu Tamil Nadu, Times of India Chennai, Google News searches (Chennai, Coimbatore, IIT Madras, TN AI jobs & policy, Tamil-language AI news) | local developments and opportunities | No |
+| **Google News RSS search** | labs without RSS (e.g. Anthropic), AI startups, Indian AI firms (Sarvam AI, Krutrim, IndiaAI…) | No |
+| **GDELT** (gdeltproject.org) | worldwide news in ~65 languages, filterable by country | No |
+| **Hacker News** (Algolia API) | launches from small AI companies that get developer attention | No |
+
+Sources are listed in `ai_news_agent/sources.py`. Add or remove lines as you like. If one source is down, it's skipped and the rest still run.
+
+The **only key** is the Anthropic API key, which Claude uses to triage, choose and summarise. It isn't free (see cost below). **Without it the agent still works:** duplicates are matched by title similarity, stories are ranked by keyword scores with the same diversity rules, and the summaries are short extracts from each article. The quality is noticeably lower, but you still get a daily email.
 
 ## One-time setup (about 10 minutes)
 
-### 1. Merge to `main`
-Scheduled workflows only run on the repository's default branch.
+1. **Merge to `main`.** Scheduled workflows only run on the default branch.
+2. **Gmail app password:** Google Account → Security → turn on 2-Step Verification → "App passwords" → create one (16 characters).
+3. **(Recommended) Anthropic API key:** https://console.anthropic.com → API Keys.
+4. **Repository secrets** (Settings → Secrets and variables → Actions → *Secrets*):
 
-### 2. Get two credentials
-- **Anthropic API key:** https://console.anthropic.com → API Keys. Expect roughly $0.20–0.40 per day.
-- **Gmail app password:** Google Account → Security → turn on 2-Step Verification → search "App passwords" → create one. You get a 16-character password. (Your normal Gmail password won't work.)
+   | Secret | Value |
+   |---|---|
+   | `SMTP_USER` | the Gmail address that sends the email |
+   | `SMTP_PASSWORD` | the 16-character app password |
+   | `EMAIL_TO` | where to deliver it (comma-separate several) |
+   | `ANTHROPIC_API_KEY` | optional, see above |
 
-### 3. Add repository secrets
-GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**:
+5. **Website:** Settings → Pages → Deploy from a branch → `main` / `/docs`. Then add the *variable* `SITE_URL` = `https://<username>.github.io/<repo>/`. (Pages on a private repo needs a paid GitHub plan.)
+6. **Test:** Actions → "Scan AI news" → Run workflow. Then "Fetch AI news (4 AM)" → Run. Then "Email AI news (8 AM)" → Run.
 
-| Secret | Value |
-|---|---|
-| `ANTHROPIC_API_KEY` | your Anthropic key |
-| `SMTP_USER` | your Gmail address (the account that sends the email) |
-| `SMTP_PASSWORD` | the 16-character Gmail app password |
-| `EMAIL_TO` | where to deliver the email (can be the same address; comma-separate several) |
+## Cost (Anthropic API, estimate)
 
-### 4. Turn on the website
-**Settings → Pages → Build and deployment → Deploy from a branch → `main` / `/docs` → Save.**
-Your site will be at `https://<your-username>.github.io/<repo-name>/`.
-Then add a repository **variable** (Variables tab) `SITE_URL` with that address so the email links to it.
+About 6 short triage calls a day plus one curation call and one summary call. That comes to roughly **$0.50–1.00 per day** with the default model (Claude Opus 5.5). To cut it, set the variable `TRIAGE_MODEL` = `claude-haiku-5-5`, which makes the frequent scan calls very cheap while keeping Opus for the final choice and summaries. The real cost depends on how much news there is, so check the Anthropic console after the first few days.
 
-> GitHub Pages on a **private** repository needs a paid GitHub plan. On a free plan, make the repo public or just use the emails. The digest is also saved as JSON in `data/`.
-
-### 5. Test it now
-**Actions → "Fetch AI news (4 AM)" → Run workflow**, then **Actions → "Email AI news (8 AM)" → Run workflow** (leave "wait" unchecked). You should get the email within a minute or two.
-
-## Time zone
-
-The schedule is set for **India Standard Time (Asia/Kolkata)**: 4:00 AM fetch, 8:00 AM email.
-To use another time zone:
-1. Set the repository variable `DIGEST_TIMEZONE`, for example `America/New_York` or `Europe/London`.
-2. Edit the two `cron:` lines in `.github/workflows/`. Cron uses **UTC**: the fetch time is 4 AM local converted to UTC, and the email job should start about 55 minutes before 8 AM local.
-
-GitHub sometimes starts scheduled jobs late. That's why the email job starts around 7:05, prepares everything, then waits so the email goes out at exactly 8:00.
-
-## Optional settings (repository variables)
+## Settings (repository *variables*, all optional)
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `DIGEST_TIMEZONE` | `Asia/Kolkata` | your local time zone |
-| `MAX_STORIES` | `12` | stories per day |
+| `MAX_STORIES` / `MIN_STORIES` | `20` / `15` | digest size |
+| `MAX_PER_COMPANY` | `2` | most stories about one company |
+| `INDIA_SHARE` | `0.3` | target share of India stories |
+| `MIN_TAMIL_NADU` | `2` | Tamil Nadu stories to include when worthwhile ones exist |
+| `TRIAGE_MODEL` | `claude-opus-5-5` | model for the 4-hourly scans |
+| `CLAUDE_MODEL` | `claude-opus-5-5` | model for the final choice and summaries |
+| `DIGEST_TIMEZONE` | `Asia/Kolkata` | your time zone |
 | `SITE_URL` | – | website link shown in the email |
-| `SMTP_HOST` / `SMTP_PORT` | `smtp.gmail.com` / `465` | for Outlook use `smtp.office365.com` / `587` |
+| `SMTP_HOST` / `SMTP_PORT` | `smtp.gmail.com` / `465` | other mail providers |
 
-Edit news sources in `ai_news_agent/sources.py`, and the summary style in the prompts in `ai_news_agent/summarize.py`.
+**Time zone:** the schedules are in IST. If you change `DIGEST_TIMEZONE`, also change the `cron:` lines in `.github/workflows/`. Cron uses UTC.
 
 ## Run locally
 
 ```bash
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=...            # optional: without it, summaries are simple extracts
+export ANTHROPIC_API_KEY=...            # optional
+python -m ai_news_agent scan            # run a few times during the day
 python -m ai_news_agent fetch --force   # build today's digest + website (open docs/index.html)
 SMTP_USER=you@gmail.com SMTP_PASSWORD=app-password python -m ai_news_agent email
 ```
 
-## How it behaves when something fails
-- A news source is down → skipped; the others still run.
-- Claude API unavailable or no key → falls back to short extracts from the article so you still get an email.
-- If Claude's safety filter declines a request, the API automatically retries on a fallback model (server-side fallbacks).
-- The 4 AM run failed → the 8 AM job builds the digest itself before sending.
-- Stories already covered in the last 7 days aren't repeated.
+State lives in `data/`: `pool.json` (stories gathered since the last digest) and one `digest-DATE.json` per day.
