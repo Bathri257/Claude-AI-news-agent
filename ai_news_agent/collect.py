@@ -109,8 +109,7 @@ def _gdelt(src: dict, cutoff: float) -> list[Article]:
         except ValueError:
             ts = 0.0
         if a.get("title") and a.get("url"):
-            name = f"{a.get('domain', 'GDELT')}"
-            out.append(Article(name, clean(a["title"]), a["url"], ts, ""))
+            out.append(Article(a.get("domain") or "GDELT", clean(a["title"]), a["url"], ts, ""))
     return out
 
 
@@ -131,30 +130,33 @@ def _hn(src: dict, cutoff: float) -> list[Article]:
 FETCHERS = {"rss": _rss, "gdelt": _gdelt, "hn": _hn}
 
 
-def _fetch_source(src: dict, cutoff: float) -> list[Article]:
+def _fetch_source(src: dict, cutoff: float) -> list[Article] | None:
+    """Articles from one source, or None if the source failed."""
     try:
         items = FETCHERS[src["kind"]](src, cutoff)
     except Exception as exc:
         log.warning("Source failed: %s (%s)", src["name"], exc)
-        return []
+        return None
     if not src.get("ai_only", True):
         items = [a for a in items if AI_KEYWORDS.search(f"{a.title} {a.snippet}")]
     log.info("%-34s %3d items", src["name"], len(items))
     return items
 
 
-def collect_new(seen_links: set[str], lookback_hours: int) -> list[Article]:
-    """Return articles not seen before, newest first, de-duplicated by link and title."""
+def collect_new(seen_links: set[str], lookback_hours: float) -> tuple[list[Article], dict[str, int]]:
+    """Return (articles not seen before, newest first; per-source item counts, -1 = failed)."""
     cutoff = time.time() - lookback_hours * 3600
     others = [s for s in SOURCES if s["kind"] != "gdelt"]
     gdelt = [s for s in SOURCES if s["kind"] == "gdelt"]
 
     with ThreadPoolExecutor(max_workers=8) as pool:
-        batches = list(pool.map(lambda s: _fetch_source(s, cutoff), others))
+        results = list(pool.map(lambda s: _fetch_source(s, cutoff), others))
     for i, s in enumerate(gdelt):  # GDELT allows ~1 request per 5 seconds
         if i:
             time.sleep(6)
-        batches.append(_fetch_source(s, cutoff))
+        results.append(_fetch_source(s, cutoff))
+    stats = {s["name"]: (-1 if r is None else len(r)) for s, r in zip(others + gdelt, results)}
+    batches = [r or [] for r in results]
 
     articles, links, titles = [], set(), set()
     for batch in batches:
@@ -168,7 +170,7 @@ def collect_new(seen_links: set[str], lookback_hours: int) -> list[Article]:
             articles.append(a)
     articles.sort(key=lambda a: a.published, reverse=True)
     log.info("Collected %d new articles", len(articles))
-    return articles
+    return articles, stats
 
 
 def fetch_text(link: str, fallback: str = "") -> str:

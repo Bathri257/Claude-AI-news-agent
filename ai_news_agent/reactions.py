@@ -7,8 +7,11 @@ Sources (all free):
     sometimes blocks for cloud servers.
 Discord, X/Twitter etc. are not used: Discord is closed (login-only servers) and X's API is paid.
 
+Reviews are gathered a day late on purpose: discussion of a story usually peaks 12-48 hours
+after the news, so each morning we look at the previous days' stories, not today's.
+
 Only real comments are collected here. The editor may quote them, and `check` verifies
-that every quoted review exists word-for-word in this file, so reviews can't be invented.
+that every quoted review exists word-for-word in reactions.json, so reviews can't be invented.
 """
 from __future__ import annotations
 
@@ -35,6 +38,7 @@ MIN_WORDS, MAX_WORDS = 12, 220
 BOTS = {"automoderator", "[deleted]", "[removed]"}
 _reddit_token: str | None = None
 _reddit_lock = threading.Lock()
+STATS = {"hn_ok": 0, "hn_fail": 0, "reddit_ok": 0, "reddit_fail": 0, "reddit_mode": "public"}
 
 
 def _get(url: str, headers: dict | None = None, data: bytes | None = None) -> dict:
@@ -69,7 +73,9 @@ def _hn(story: dict, since: int) -> list[dict]:
     for q in queries:
         try:
             hits += _get(base + urllib.parse.urlencode(q)).get("hits", [])
+            STATS["hn_ok"] += 1
         except Exception as exc:
+            STATS["hn_fail"] += 1
             log.info("HN search failed: %s", exc)
     threads = {h["objectID"]: h for h in hits if (h.get("num_comments") or 0) > 0}
     best = sorted(threads.values(), key=lambda h: h.get("points") or 0, reverse=True)[:2]
@@ -116,6 +122,7 @@ def _reddit(story: dict) -> list[dict]:
     except Exception as exc:
         log.warning("Reddit login failed: %s", exc)
         auth = None
+    STATS["reddit_mode"] = "api" if auth else "public"
     host = "https://oauth.reddit.com" if auth else "https://www.reddit.com"
     suffix = "" if auth else ".json"
 
@@ -126,7 +133,9 @@ def _reddit(story: dict) -> list[dict]:
         try:
             data = _get(f"{host}/search{suffix}?{params}", headers=auth)
             posts += [c["data"] for c in data["data"]["children"]]
+            STATS["reddit_ok"] += 1
         except Exception as exc:
+            STATS["reddit_fail"] += 1
             log.info("Reddit search failed (%s): %s", "api" if auth else "public", exc)
             break
         time.sleep(1.0)
@@ -166,7 +175,7 @@ def _terms(story: dict) -> str:
 
 
 def gather(stories: list[dict]) -> dict:
-    """Collect candidate user comments for each story; key = story number (1-based) as a string."""
+    """Collect candidate user comments for each story, keyed by story id."""
     since = int(time.time() - 10 * 86400)
     fixture = json.loads(open(os.environ["REACTIONS_FIXTURE"]).read()) if os.getenv("REACTIONS_FIXTURE") else None
 
@@ -178,31 +187,25 @@ def gather(stories: list[dict]) -> dict:
         else:
             comments = _hn(s, since) + _reddit(s)
         comments.sort(key=lambda c: c["score"], reverse=True)
-        return {"headline": s.get("headline", ""), "search_terms": s["search_terms"],
-                "comments": comments[:PER_STORY]}
+        return {"headline": s.get("headline", ""), "date": s.get("date", ""),
+                "search_terms": s["search_terms"], "comments": comments[:PER_STORY]}
 
     # Two at a time keeps Reddit under its rate limit (~100 requests/minute).
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = list(pool.map(one, stories))
-    out = {str(i): r for i, r in enumerate(results, 1)}
-    for k, v in out.items():
-        log.info("Reactions for story %s: %d comments", k, len(v["comments"]))
+    out = {s["id"]: r for s, r in zip(stories, results)}
+    log.info("Reactions: %d comments for %d stories (HN ok/fail %d/%d, Reddit %s ok/fail %d/%d)",
+             sum(len(v["comments"]) for v in out.values()), len(out), STATS["hn_ok"], STATS["hn_fail"],
+             STATS["reddit_mode"], STATS["reddit_ok"], STATS["reddit_fail"])
     return out
 
 
-def cmd_reactions() -> int:
-    """Used by the editor: read draft.json, write reactions.json."""
-    from .editor import DRAFT
-    try:
-        stories = json.loads(DRAFT.read_text())["stories"]
-    except Exception as exc:
-        print(f"ERROR: write {DRAFT.relative_to(config.ROOT)} first ({exc})")
-        return 1
-    data = gather(stories)
-    REACTIONS.write_text(json.dumps(data, indent=1, ensure_ascii=False))
-    total = sum(len(v["comments"]) for v in data.values())
-    print(f"OK: {total} comments for {len(data)} stories written to {REACTIONS.relative_to(config.ROOT)}")
-    return 0
+def health() -> dict:
+    def status(ok: int, fail: int) -> str:
+        return "unused" if ok + fail == 0 else ("ok" if ok else "failing")
+    return {"hacker_news": status(STATS["hn_ok"], STATS["hn_fail"]),
+            "reddit": status(STATS["reddit_ok"], STATS["reddit_fail"]),
+            "reddit_mode": STATS["reddit_mode"]}
 
 
 # ---------------------------------------------------------------- verification
@@ -212,9 +215,9 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
-def verify_review(review: dict, story_no: int, reactions: dict) -> str | None:
+def verify_review(review: dict, story_id: str, reactions: dict) -> str | None:
     """Return an error message if the review doesn't match a collected comment word-for-word."""
-    pool = reactions.get(str(story_no), {}).get("comments", [])
+    pool = reactions.get(story_id, {}).get("comments", [])
     match = next((c for c in pool if c["link"] == review.get("link")), None)
     if match is None:
         return "its link is not one of the collected comments for this story"
@@ -226,14 +229,16 @@ def verify_review(review: dict, story_no: int, reactions: dict) -> str | None:
     return None
 
 
-def auto_pick(stories: list[dict], reactions: dict) -> None:
-    """Fallback when no AI editor ran: attach the top-voted comments as-is."""
-    for i, s in enumerate(stories, 1):
-        picks = reactions.get(str(i), {}).get("comments", [])[:2]
+def auto_pick(reactions: dict) -> dict:
+    """Fallback when no AI editor ran: the top-voted comments as-is, keyed by story id."""
+    out = {}
+    for sid, entry in reactions.items():
+        picks = entry.get("comments", [])[:2]
         reviews = []
         for c in picks:
             words = c["text"].split()
             quote = " ".join(words[:40]) + ("…" if len(words) > 40 else "")
             reviews.append({"platform": c["platform"], "community": c["community"], "quote": quote,
                             "takeaway": "", "link": c["link"], "score": c["score"]})
-        s["reactions"] = {"pulse": "", "sentiment": "none", "reviews": reviews, "auto": True}
+        out[sid] = {"pulse": "", "sentiment": "none", "reviews": reviews, "auto": True}
+    return out
