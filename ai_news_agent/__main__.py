@@ -25,7 +25,7 @@ KEEP_SEEN_DAYS = 7
 
 
 def _history(today: str) -> list[dict]:
-    return [{k: s.get(k) for k in ("id", "date", "headline", "brief", "thread", "technology", "companies")}
+    return [{k: s.get(k) for k in ("id", "date", "headline", "brief", "thread", "technology", "companies", "city")}
             for s in store.recent_stories(today, config.HISTORY_DAYS)]
 
 
@@ -91,6 +91,7 @@ def cmd_daily(force: bool = False) -> dict:
     week_start = (date.fromisoformat(today) - timedelta(days=6)).isoformat()
     history = _history(today)
     ctx = {"today": today, "recap": weekday == config.RECAP_WEEKDAY, "week_start": week_start,
+           "cities": store.load_interests()["cities"],
            "history_ids": [h["id"] for h in history],
            "week_ids": [h["id"] for h in history if h["date"] >= week_start]}
     config.WORK_DIR.mkdir(parents=True, exist_ok=True)

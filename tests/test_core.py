@@ -12,7 +12,7 @@ def story(i, **kw):
     s = {"headline": f"Headline {i}", "tier": "must" if i <= config.MUST_KNOW else "quick",
          "brief": "A short one line essence of the story for quick scanning.", "summary": " ".join(["word"] * 80),
          "link": f"https://example.com/{i}", "source": "Src", "category": "Research", "technology": "x",
-         "region": "US", "india": "none", "companies": [f"Co{i}"], "thread": f"T{i}", "related": [],
+         "region": "US", "india": "none", "city": "", "companies": [f"Co{i}"], "thread": f"T{i}", "related": [],
          "candidate_id": f"c{i}"}
     s.update(kw)
     return s
@@ -88,3 +88,23 @@ def test_storylines_chain_across_days():
     assert threads.day_number(chains["2026-11-19-01"], s[2]) == 3
     assert len(chains["2026-11-19-02"]) == 1
     assert threads.storylines(s)[0]["name"] == "T"
+
+
+def test_city_rules():
+    stories = [story(i) for i in range(1, 16)]
+    stories[5].update(city="Hyderabad", india="none")
+    stories[6].update(city="Mumbai", india="india")
+    errors, _ = check({"stories": stories, "opportunities": [], "past_reactions": {}}, ctx())
+    assert any("Hyderabad" in e for e in errors) and any("city must be one of" in e for e in errors)
+    fixed = repair({"stories": stories}, ctx())
+    by_head = {s["headline"]: s for s in fixed["stories"]}
+    assert by_head["Headline 6"]["india"] == "india" and by_head["Headline 7"]["city"] == ""
+
+
+def test_city_detection():
+    from ai_news_agent.collect import city_of, india_relevance
+    assert city_of("Microsoft opens AI centre in Hyderabad") == "Hyderabad"
+    assert city_of("Sarvam AI, the Bengaluru startup") == "Bengaluru"
+    assert city_of("IIT Madras launches a course") == "Chennai"
+    assert city_of("OpenAI launches a model") == ""
+    assert india_relevance("Telangana AI policy") == "india"

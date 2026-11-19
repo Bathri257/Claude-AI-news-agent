@@ -70,7 +70,21 @@ SOURCES = [
     {"name": "GDELT: India AI", "kind": "gdelt", "url":
         '("artificial intelligence" OR "generative AI" OR "AI startup") sourcecountry:india'},
 
-    # ---------- Tamil Nadu ----------
+    # ---------- Focus cities: Bengaluru, Hyderabad (Chennai is below with Tamil Nadu) ----------
+    {"name": "Google News: AI Bengaluru", "kind": "rss", "url": google_news(
+        '("artificial intelligence" OR AI OR "GenAI" OR "AI startup") (Bengaluru OR Bangalore)', region="IN")},
+    {"name": "Google News: AI Hyderabad", "kind": "rss", "url": google_news(
+        '("artificial intelligence" OR AI OR "GenAI" OR "AI startup") (Hyderabad OR Telangana OR "T-Hub")', region="IN")},
+    {"name": "Google News: city AI hubs & GCCs", "kind": "rss", "url": google_news(
+        '(Bengaluru OR Hyderabad OR Chennai) ("AI centre" OR "AI hub" OR GCC OR "data centre" OR "innovation centre")',
+        region="IN")},
+    {"name": "Times of India: Bengaluru", "kind": "rss", "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128833038.cms", "ai_only": False},
+    {"name": "Times of India: Hyderabad", "kind": "rss", "url": "https://timesofindia.indiatimes.com/rssfeeds/-2128816011.cms", "ai_only": False},
+    {"name": "GDELT: Bengaluru & Hyderabad AI", "kind": "gdelt", "url":
+        '("artificial intelligence" OR "AI startup" OR "generative AI" OR "data centre") '
+        '(Bengaluru OR Bangalore OR Hyderabad OR Telangana)'},
+
+    # ---------- Tamil Nadu / Chennai ----------
     {"name": "The Hindu: Tamil Nadu", "kind": "rss", "url": "https://www.thehindu.com/news/national/tamil-nadu/feeder/default.rss", "ai_only": False},
     {"name": "Times of India: Chennai", "kind": "rss", "url": "https://timesofindia.indiatimes.com/rssfeeds/2950623.cms", "ai_only": False},
     {"name": "Google News: AI Tamil Nadu", "kind": "rss", "url": google_news(

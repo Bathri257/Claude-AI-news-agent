@@ -4,8 +4,9 @@
 
 - Listens on 127.0.0.1 only, so nothing outside your computer can reach it.
 - On start it runs `git pull` to fetch the editions GitHub Actions made overnight.
-- Your 👍 / 👎 / "more like this" are saved to data/feedback.json and pushed back to GitHub
-  (a few seconds later, batched) so tomorrow's editor can use them.
+- Your 👍 / 👎 / "more like this" (data/feedback.json) and your focus settings
+  (data/interests.json) are pushed back to GitHub, batched a few seconds later, so tomorrow's
+  editor can use them.
 """
 from __future__ import annotations
 
@@ -16,6 +17,8 @@ import subprocess
 import threading
 import time
 import webbrowser
+from collections import Counter
+from datetime import date, timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -50,7 +53,7 @@ class Sync:
             self.last = time.time()
         return self.status
 
-    def push_feedback_soon(self) -> None:
+    def push_soon(self) -> None:
         if not self.enabled:
             return
         if self._timer:
@@ -61,10 +64,12 @@ class Sync:
 
     def _push(self) -> None:
         with self._lock:
-            self._git("add", str(config.FEEDBACK_FILE.relative_to(config.ROOT)))
+            for f in (config.FEEDBACK_FILE, config.INTERESTS_FILE):
+                if f.exists():
+                    self._git("add", str(f.relative_to(config.ROOT)))
             if self._git("diff", "--cached", "--quiet").returncode == 0:
                 return
-            self._git("commit", "-m", "Reader feedback")
+            self._git("commit", "-m", "Reader feedback and focus")
             self._git("pull", "--rebase", "--autostash")
             r = self._git("push")
             self.status = "synced" if r.returncode == 0 else f"push failed: {(r.stderr or r.stdout).strip()[:160]}"
@@ -78,7 +83,7 @@ SYNC = Sync(False)
 
 def _light(s: dict) -> dict:
     keep = ("id", "date", "headline", "brief", "summary", "link", "source", "thread", "category",
-            "technology", "india", "tier", "reactions")
+            "technology", "india", "city", "companies", "tier", "reactions")
     return {k: s.get(k) for k in keep}
 
 
@@ -106,9 +111,12 @@ def api_index() -> dict:
     return {
         "days": days,
         "search": [{k: s.get(k) for k in ("id", "date", "headline", "brief", "thread", "category",
-                                          "technology", "india")} for s in stories],
+                                          "technology", "india", "city", "companies")} for s in stories],
         "storylines": threads.storylines(stories)[:60],
         "feedback": {k: v.get("vote") for k, v in store.load_feedback().items()},
+        "interests": store.load_interests(),
+        "topics": api_topics(),
+        "focus_cities": config.FOCUS_CITIES,
         "sync": {"status": SYNC.status, "last": SYNC.last},
     }
 
@@ -144,7 +152,74 @@ def save_vote(sid: str, vote: str | None) -> None:
     else:
         feedback.pop(sid, None)
     store.save_feedback(feedback)
-    SYNC.push_feedback_soon()
+    SYNC.push_soon()
+
+
+def _clean_list(values, limit: int = 60) -> list[str]:
+    out = []
+    for v in values if isinstance(values, list) else []:
+        v = " ".join(str(v).split())[:60]
+        if v and v.lower() not in {x.lower() for x in out}:
+            out.append(v)
+    return out[:limit]
+
+
+def save_interests(body: dict) -> dict:
+    data = {
+        "follow": _clean_list(body.get("follow")),
+        "mute": _clean_list(body.get("mute")),
+        "storylines": [s for s in _clean_list(body.get("storylines"), 200) if ID_RE.match(s)],
+        "cities": [c for c in _clean_list(body.get("cities")) if c in config.FOCUS_CITIES],
+    }
+    store.save_interests(data)
+    SYNC.push_soon()
+    return data
+
+
+def api_topics(days: int = 30) -> dict:
+    """Suggestions for the focus screen: what has actually been in the news lately."""
+    since = (date.today() - timedelta(days=days)).isoformat()
+    recent = [s for s in store.all_stories() if s["date"] >= since]
+    companies, tech, cats = Counter(), Counter(), Counter()
+    for s in recent:
+        companies.update(c for c in (s.get("companies") or [])[:2] if c)
+        if s.get("technology"):
+            tech[s["technology"]] += 1
+        cats[s["category"]] += 1
+    def ok(term: str) -> bool:  # skip city names (they have their own switch) and fragments
+        return ("," not in term and "'s" not in term and len(term) > 2
+                and term not in config.FOCUS_CITIES and term.lower() not in {"tamil", "india", "ai"})
+    top = lambda c, n: [k for k, _ in c.most_common(n * 2) if ok(k)][:n]
+    return {"companies": top(companies, 24), "technologies": top(tech, 24), "categories": top(cats, 14)}
+
+
+def _city(s: dict) -> str:
+    if s.get("city"):
+        return s["city"]
+    return "Rest of India" if s.get("india", "none") != "none" else ""
+
+
+def api_india(days: int) -> dict:
+    """India stories over the last `days` days, plus a pulse for each focus city."""
+    since = (date.today() - timedelta(days=days)).isoformat()
+    half = (date.today() - timedelta(days=days // 2)).isoformat()
+    stories = [s for s in store.all_stories() if s["date"] >= since and _city(s)]
+    chains = threads.build(store.all_stories())
+    pulse = []
+    for city in [*config.FOCUS_CITIES, "Rest of India"]:
+        mine = [s for s in stories if _city(s) == city]
+        recent, earlier = sum(s["date"] >= half for s in mine), sum(s["date"] < half for s in mine)
+        lines = Counter()
+        for s in mine:
+            chain = chains.get(s["id"], [s])
+            lines[chain[-1].get("thread") or chain[-1]["headline"]] += 1
+        pulse.append({
+            "city": city, "count": len(mine), "trend": recent - earlier,
+            "categories": Counter(s["category"] for s in mine).most_common(4),
+            "storylines": [k for k, _ in lines.most_common(3)],
+        })
+    items = sorted(stories, key=lambda s: s["id"], reverse=True)
+    return {"days": days, "pulse": pulse, "stories": [{**_light(s), "city": _city(s)} for s in items]}
 
 
 # ---------------------------------------------------------------- HTTP
@@ -174,6 +249,10 @@ class Handler(BaseHTTPRequestHandler):
         if m and DATE_RE.match(m.group(1)):
             data = api_day(m.group(1))
             return self._json(data) if data else self._json({"error": "no edition"}, 404)
+        if path == "/api/india":
+            q = self.path.split("?", 1)[1] if "?" in self.path else ""
+            days = 30 if "days=30" in q else 7
+            return self._json(api_india(days))
         m = re.match(r"^/api/storyline/(.+)$", path)
         if m and ID_RE.match(m.group(1)):
             data = api_storyline(m.group(1))
@@ -196,6 +275,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"error": "bad feedback"}, 400)
             save_vote(sid, vote)
             return self._json({"ok": True})
+        if self.path == "/api/interests":
+            return self._json(save_interests(body))
         if self.path == "/api/sync":
             return self._json({"status": SYNC.pull()})
         self._json({"error": "not found"}, 404)

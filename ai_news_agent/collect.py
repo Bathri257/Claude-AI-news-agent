@@ -32,7 +32,7 @@ AI_KEYWORDS = re.compile(
 INDIA = re.compile(
     r"\b(india|indian|bharat|bengaluru|bangalore|mumbai|delhi|hyderabad|pune|noida|gurugram|"
     r"meity|indiaai|sarvam|krutrim|bharatgpt|corover|infosys|tcs|wipro|hcltech|tech mahindra|"
-    r"reliance|jio|nasscom|iit|iisc)\b",
+    r"reliance|jio|nasscom|iit|iisc|hyderabad|telangana|karnataka|chennai)\b",
     re.IGNORECASE,
 )
 TAMIL_NADU = re.compile(
@@ -60,6 +60,23 @@ def clean(text: str) -> str:
 def normalize_link(link: str) -> str:
     p = urllib.parse.urlparse(link)
     return urllib.parse.urlunparse((p.scheme, p.netloc.lower().removeprefix("www."), p.path.rstrip("/"), "", "", ""))
+
+
+# Focus cities: each pattern also matches well-known local institutions and companies.
+CITIES = {
+    "Bengaluru": re.compile(r"\b(bengaluru|bangalore|iisc|koramangala|whitefield|electronic city|"
+                            r"karnataka)\b", re.I),
+    "Chennai": re.compile(r"\b(chennai|iit madras|iit-madras|guindy|sriperumbudur|zoho|freshworks|"
+                          r"tamil nadu)\b", re.I),
+    "Hyderabad": re.compile(r"\b(hyderabad|hitec city|gachibowli|t-hub|iiit hyderabad|telangana|"
+                            r"cyberabad)\b", re.I),
+}
+
+
+def city_of(text: str) -> str:
+    """The focus city a story is about, or "" (first match wins when several are named)."""
+    hits = [(m.start(), city) for city, rx in CITIES.items() if (m := rx.search(text))]
+    return min(hits)[1] if hits else ""
 
 
 def india_relevance(text: str) -> str:

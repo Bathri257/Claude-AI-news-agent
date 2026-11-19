@@ -44,6 +44,7 @@ STORY_FIELDS = {
     "technology": 'specific technology/product, e.g. "Gemini 3", "humanoid robots", "EU AI Act"',
     "region": 'e.g. "US", "China", "EU", "India", "Tamil Nadu", "Global"',
     "india": '"tamil_nadu", "india" or "none"',
+    "city": '"Bengaluru", "Chennai", "Hyderabad", or "" if not about one of these cities',
     "companies": "main organisations involved, short names, most important first",
     "thread": "storyline name, reused from history.json when this continues an earlier story",
     "related": "ids of earlier stories in history.json that this continues, or []",
@@ -80,6 +81,7 @@ def prompt(ctx: dict) -> str:
         min_tamil_nadu=config.MIN_TAMIL_NADU, min_words=config.MIN_WORDS, max_words=config.MAX_WORDS,
         brief_min=config.BRIEF_MIN, brief_max=config.BRIEF_MAX, history_days=config.HISTORY_DAYS,
         today=ctx["today"], max_opportunities=config.MAX_OPPORTUNITIES, weekly_task=weekly,
+        focus_cities=", ".join(ctx.get("cities") or config.FOCUS_CITIES),
         work=WORK.relative_to(config.ROOT), shortlist_size=config.SHORTLIST_SIZE,
         max_web_searches=config.MAX_WEB_SEARCHES, schema=_schema(ctx["recap"]),
     )
@@ -125,6 +127,10 @@ def check(draft: dict, ctx: dict) -> tuple[list[str], list[str]]:
             errors.append(f"{label}: category must be one of {CATEGORIES}.")
         if s["india"] not in ("none", "india", "tamil_nadu"):
             errors.append(f"{label}: india must be none, india or tamil_nadu.")
+        if s["city"] not in ("", *config.FOCUS_CITIES):
+            errors.append(f"{label}: city must be one of {config.FOCUS_CITIES} or \"\".")
+        elif s["city"] and s["india"] == "none":
+            errors.append(f"{label}: a story about {s['city']} must have india set to india or tamil_nadu.")
         bad = [r for r in s["related"] if r not in history_ids] if isinstance(s["related"], list) else ["?"]
         if bad:
             errors.append(f"{label}: related ids {bad} are not in history.json.")
@@ -151,6 +157,10 @@ def check(draft: dict, ctx: dict) -> tuple[list[str], list[str]]:
         errors.append(f"{india} India stories; at most {target + 2}.")
     if tn < config.MIN_TAMIL_NADU and have_tn > tn:
         warnings.append(f"Only {tn} Tamil Nadu stories (target {config.MIN_TAMIL_NADU}); {have_tn} candidates exist.")
+    for city in ctx.get("cities", config.FOCUS_CITIES):
+        have = sum(c.get("city") == city for c in ctx["candidates"])
+        if have and not any(s.get("city") == city for s in stories):
+            warnings.append(f"No {city} story chosen, though {have} {city} candidates exist. Include one if worthwhile.")
 
     opps = draft.get("opportunities", [])
     if not isinstance(opps, list) or len(opps) > config.MAX_OPPORTUNITIES:
@@ -225,6 +235,9 @@ def repair(draft: dict, ctx: dict) -> dict:
         out["brief"] = brief if config.BRIEF_MIN <= _words(brief) <= config.BRIEF_MAX else _first_sentence(out["summary"])
         out["category"] = s.get("category") if s.get("category") in CATEGORIES else "Industry & Products"
         out["india"] = s.get("india") if s.get("india") in ("none", "india", "tamil_nadu") else "none"
+        out["city"] = s.get("city") if s.get("city") in config.FOCUS_CITIES else ""
+        if out["city"] and out["india"] == "none":
+            out["india"] = "tamil_nadu" if out["city"] == "Chennai" else "india"
         out["companies"] = [str(c) for c in (s.get("companies") or [])][:4]
         out["related"] = [r for r in (s.get("related") or []) if r in history_ids]
         out["thread"] = str(s.get("thread") or out["headline"])[:60]
@@ -376,7 +389,10 @@ def _extractive(ctx: dict) -> dict:
     india_n = max(0, round(config.MAX_STORIES * config.INDIA_SHARE) - len(tn))
     india = [c for c in ranked if c["india"] == "india"][:india_n]
     world = [c for c in ranked if c["india"] == "none"]
-    ordered = world[: config.MUST_KNOW] + tn + india + world[config.MUST_KNOW:]
+    cities = [next((c for c in ranked if c.get("city") == city), None) for city in config.FOCUS_CITIES]
+    cities = [c for c in cities if c is not None and c not in tn]
+    india = [c for c in india if c not in cities]
+    ordered = world[: config.MUST_KNOW] + tn + cities + india + world[config.MUST_KNOW:]
     stories = []
     for c in ordered:
         words: list[str] = []
@@ -387,7 +403,7 @@ def _extractive(ctx: dict) -> dict:
         stories.append({"headline": c["title"], "tier": "quick", "brief": "", "summary": " ".join(words) or c["title"],
                         "link": c["link"], "source": c["source"], "category": "Industry & Products",
                         "technology": "", "region": "India" if c["india"] != "none" else "",
-                        "india": c["india"], "companies": c["companies"], "thread": c["title"],
+                        "india": c["india"], "city": c.get("city", ""), "companies": c["companies"], "thread": c["title"],
                         "related": [], "candidate_id": c["id"]})
     return {"stories": stories, "opportunities": [], "past_reactions": auto_pick(ctx.get("reactions") or {})}
 

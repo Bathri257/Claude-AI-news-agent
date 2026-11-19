@@ -1,7 +1,10 @@
 # The Morning Brief: your private AI news app
 
-A personal app that keeps you current on AI around the world, and closer to home in India and Tamil Nadu. Every night at **4 AM IST** an agent gathers the day's news. When you open the app, it's waiting for you.
+A calm, personal answer to AI information overload. It covers what matters in AI around the world, plus India, with a close eye on **Bengaluru, Chennai and Hyderabad**, where new opportunities are most likely to appear. Every night at **4 AM IST** an agent reads ~50 sources so you don't have to. When you open the app, a short brief is waiting, and it ends with **"You're caught up."**
 
+- **Your brief:** the 5 Must-know stories plus up to 4 **picked for you** from what you follow, usually 2–4 minutes of reading. Everything else is folded under "Everything else today", grouped by world and by city. Stories you've read fade.
+- **Your focus:** follow topics, companies or technologies (e.g. *AI Agents*, *Sarvam AI*), mute what you don't care about (e.g. *Robotics*), follow a storyline, and choose your cities. Use **⚙ Tune** on any story, or the *Your focus* screen. The app ranks by it immediately, and the next morning's editor is told about it.
+- **India tab:** a 7-day or 30-day **city pulse** for Bengaluru, Chennai, Hyderabad and the rest of India. It shows how many AI stories each city had, whether it's getting busier or quieter, which kinds of news (agents, policy, data centres, jobs…), and the storylines running there. Below it, every India story for the chosen city.
 - **Must know:** the 5 most important stories, each with a headline, a 60–100 word essence and a link to the full article.
 - **Quick hits:** the other 10–15 stories as one-liners. Tap one to see the full essence.
 - **For you · opportunities:** jobs, free courses, schemes, grants and tools you could act on, Tamil Nadu and India first.
@@ -30,7 +33,7 @@ Whenever you like · on your laptop
   python -m ai_news_agent app   → pulls the latest editions, opens the app in your browser
 ```
 
-**Your rules, checked by code and not just requested:** at most 2 stories per company; big labs *and* small firms; a spread of technologies; about 30% India with at least 2 Tamil Nadu items when worthwhile ones exist; at least 2 global stories in Must know; no repeats unless something new happened.
+**Your rules, checked by code and not just requested:** at most 2 stories per company; big labs *and* small firms; a spread of technologies; about 30% India, including the day's best story from each of your cities (Bengaluru, Chennai, Hyderabad) when there is one worth reading; at least 2 global stories in Must know; no repeats unless something new happened. What you follow is preferred and what you mute is left out, within those rules.
 
 **If something fails, you still get an edition:** Claude Code (Pro) → Gemini free tier (optional) → plain article extracts. The app's status light tells you which one ran.
 
@@ -94,6 +97,7 @@ ai_news_agent/
   threads.py      storylines                   prefs.py      your 👍/👎 → a note for the editor
   store.py        reading/writing data/        app/          the local app (server + page)
 data/digests/     one edition per day          data/feedback.json  your votes
+data/interests.json  what you follow / mute, your storylines and cities (set in the app)
 tests/            checks for the safety rules (python -m pytest)
 ```
 

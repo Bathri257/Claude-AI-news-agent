@@ -10,6 +10,7 @@ DIGESTS_DIR = DATA_DIR / "digests"   # one JSON file per day
 WORK_DIR = DATA_DIR / "work"         # scratch files for the editor run (not committed)
 STATE_FILE = DATA_DIR / "state.json"
 FEEDBACK_FILE = DATA_DIR / "feedback.json"
+INTERESTS_FILE = DATA_DIR / "interests.json"   # what you follow / mute, set in the app
 
 TIMEZONE = ZoneInfo(os.getenv("DIGEST_TIMEZONE") or "Asia/Kolkata")
 
@@ -28,6 +29,7 @@ MAX_OPPORTUNITIES = int(os.getenv("MAX_OPPORTUNITIES") or 5)
 MAX_PER_COMPANY = int(os.getenv("MAX_PER_COMPANY") or 2)
 INDIA_SHARE = float(os.getenv("INDIA_SHARE") or 0.3)
 MIN_TAMIL_NADU = int(os.getenv("MIN_TAMIL_NADU") or 2)
+FOCUS_CITIES = ["Bengaluru", "Chennai", "Hyderabad"]
 MIN_WORDS, MAX_WORDS = 60, 100
 BRIEF_MIN, BRIEF_MAX = 8, 30
 RECAP_WEEKDAY = int(os.getenv("RECAP_WEEKDAY") or 6)     # 6 = Sunday

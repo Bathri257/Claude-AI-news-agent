@@ -60,7 +60,12 @@ text-transform:uppercase;color:var(--accent)}
 .opps h3{margin:0 0 4px;font:700 12.5px var(--ui);letter-spacing:.14em;text-transform:uppercase;color:var(--opp)}
 .opp{padding:10px 0 12px;border-top:1px solid color-mix(in srgb,var(--opp) 20%,transparent)}
 .opp:first-of-type{border-top:0}
-.opp .t{font:600 18px/1.35 var(--display)}
+.opp .t{font:600 17px/1.35 var(--display);cursor:pointer;list-style:none}
+.opp .t::-webkit-details-marker{display:none}
+.opp .t:before{content:"＋ ";color:var(--opp);font-family:var(--ui)}
+.opp[open] .t:before{content:"－ "}
+.opp .t .m{display:inline;margin-left:6px}
+.opp .d{margin:6px 0 2px 22px}
 .opp .t a{text-decoration:none}.opp .t a:hover{text-decoration:underline}
 .opp .d{font-size:16px;margin-top:2px}
 .opp .m{font:600 12px var(--ui);color:var(--opp);margin-top:4px}
@@ -83,6 +88,43 @@ text-transform:uppercase;color:var(--accent)}
 .votes button{border:1px solid var(--rule);background:var(--card);border-radius:99px;padding:3px 11px;cursor:pointer;
 font:500 12.5px var(--ui);color:var(--soft)}
 .votes button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.votes .tune{margin-left:auto;border-style:dashed}
+.tuner{display:none;margin-top:10px;padding:10px 12px;border:1px dashed var(--rule);border-radius:10px;font:500 13px/2 var(--ui);color:var(--soft)}
+.tuner.show{display:block}
+.pill{display:inline-block;border:1px solid var(--rule);background:var(--card);border-radius:99px;padding:2px 10px;margin:2px 4px 2px 0;
+cursor:pointer;font:500 12.5px/1.6 var(--ui);color:var(--ink)}
+.pill.on{background:var(--opp);border-color:var(--opp);color:var(--paper)}
+.pill.mute.on{background:var(--soft);border-color:var(--soft)}
+.pill .x{margin-left:6px;opacity:.6}
+.why{display:inline-block;font:600 11px var(--ui);color:var(--opp);background:var(--opp-soft);border-radius:3px;padding:1px 6px;margin-left:6px;letter-spacing:.04em}
+.read{opacity:.55}.read:hover{opacity:1}
+.caught{margin:26px 0 8px;padding:18px;border-radius:14px;background:var(--card);border:1px solid var(--rule);text-align:center}
+.caught b{display:block;font:700 22px var(--display);margin-bottom:4px}
+.caught span{font:500 13.5px var(--ui);color:var(--soft)}
+.bar-prog{height:6px;border-radius:99px;background:var(--rule);margin:10px auto 0;max-width:260px;overflow:hidden}
+.bar-prog i{display:block;height:100%;background:var(--opp)}
+details.rest{margin-top:22px;border-top:1px solid var(--rule)}
+details.rest>summary{cursor:pointer;list-style:none;padding:16px 0;font:600 15px var(--ui);color:var(--soft)}
+details.rest>summary::-webkit-details-marker{display:none}
+details.rest>summary:before{content:"▸ ";color:var(--accent)}
+details.rest[open]>summary:before{content:"▾ "}
+.sub{font:700 12px var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin:26px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
+.chips a{font:600 13px var(--ui);text-decoration:none;border:1px solid var(--rule);border-radius:99px;padding:5px 12px;color:var(--soft)}
+.chips a.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.pulse-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:14px 0 6px}
+.pcard{background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:12px 14px;text-decoration:none;display:block}
+.pcard.on{border-color:var(--accent)}
+.pcard .c{font:700 18px var(--display)}
+.pcard .n{font:600 12.5px var(--ui);color:var(--soft);margin:2px 0 8px}
+.pcard .n b{color:var(--ink)}
+.up{color:var(--pos)}.down{color:var(--neg)}
+.cat{font:500 12px/1.35 var(--ui);color:var(--soft);margin-top:6px}
+.cat i{display:block;height:5px;border-radius:3px;background:var(--accent);opacity:.7;margin-top:3px}
+.pcard .lines{font:italic 13.5px/1.45 var(--serif);color:var(--soft);margin-top:6px}
+.focus h4{font:700 12.5px var(--ui);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:28px 0 6px}
+.focus p{margin:0 0 8px;color:var(--soft);font-size:15.5px}
+.focus input{font:500 14px var(--ui);padding:7px 12px;border:1px solid var(--rule);border-radius:99px;background:var(--card);color:var(--ink);width:320px;max-width:100%}
 /* quick hits */
 .quick{padding:14px 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:44px 1fr;gap:0 14px;cursor:pointer}
 .quick .num{font-size:19px;padding-top:2px}
@@ -150,10 +192,12 @@ body{font-size:17px}.story,.quick{grid-template-columns:30px 1fr;gap:0 10px}.num
   <div class="bar">
     <nav class="tabs" id="tabs">
       <a href="#/" data-t="today">Today</a>
+      <a href="#/india" data-t="india">India</a>
       <a href="#/people" data-t="people">What people said</a>
       <a href="#/storylines" data-t="storylines">Storylines</a>
       <a href="#/week" data-t="week">This week</a>
       <a href="#/archive" data-t="archive">Archive</a>
+      <a href="#/focus" data-t="focus">Your focus</a>
     </nav>
     <label class="search"><input id="q" type="search" placeholder="Search everything" aria-label="Search all stories"></label>
   </div>
@@ -175,20 +219,52 @@ function go(h) { location.hash = h; }
 
 function greet() {
   const h = new Date().getHours();
-  $("#hello").textContent = (h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening.") +
-    " Here's what happened in AI while you slept.";
+  $("#hello").textContent = h < 12 ? "Good morning. Here's what happened in AI while you slept."
+    : h < 17 ? "Good afternoon. Here's today in AI, without the noise." : "Good evening. Here's today in AI, without the noise.";
 }
 
 /* ---------- pieces ---------- */
 function kicker(s) {
-  const tn = s.india === "tamil_nadu" ? '<span class="badge tn">Tamil Nadu</span>' : "";
+  const tn = s.city ? `<span class="badge tn">${esc(s.city)}</span>` : s.india === "tamil_nadu" ? '<span class="badge tn">Tamil Nadu</span>' : "";
   const day = s.storyline && s.storyline.days > 1 ? `<span class="badge upd">Update · day ${s.storyline.day}</span>` : "";
   return `<div class="kicker">${[s.category, s.technology].filter(Boolean).map(esc).join(" · ")}${tn}${day}</div>`;
 }
-function votes(id) {
-  const v = INDEX.feedback[id];
-  const b = (k, label) => `<button class="${v === k ? "on" : ""}" onclick="vote(event,'${id}','${k}')">${label}</button>`;
-  return `<div class="votes">${b("up","👍 Useful")}${b("down","👎 Not for me")}${b("more","✨ More like this")}</div>`;
+/* ---------- personalisation ---------- */
+let READ = new Set();
+try { READ = new Set(JSON.parse(localStorage.getItem("mb-read") || "[]")); } catch {}
+function markRead(id) {
+  if (!id || READ.has(id)) return;
+  READ.add(id);
+  try { localStorage.setItem("mb-read", JSON.stringify([...READ].slice(-4000))); } catch {}
+  document.getElementById("s-" + id)?.classList.add("read");
+  updateCaught();
+}
+const lc = x => String(x || "").toLowerCase();
+const termsOf = s => lc([s.headline, s.thread, s.technology, s.category, s.city, ...(s.companies || [])].join(" | "));
+const matches = (s, term) => termsOf(s).includes(lc(term));
+function personal(s) {
+  const it = INDEX.interests, chain = [s.id, ...(s.storyline?.items || []).map(m => m.id)];
+  if (it.storylines.some(id => chain.includes(id))) return {score: 3, why: "storyline you follow"};
+  const f = it.follow.find(t => matches(s, t));
+  if (f) return {score: 2, why: "you follow " + f};
+  if (s.city && it.cities.includes(s.city)) return {score: 1, why: s.city};
+  return {score: 0};
+}
+const mutedBy = s => INDEX.interests.mute.find(t => matches(s, t));
+function tuneOptions(s) {
+  return [...new Set([...(s.companies || []).slice(0, 2), s.technology, s.category, s.city].filter(Boolean))];
+}
+function votes(s) {
+  const id = s.id, v = INDEX.feedback[id], it = INDEX.interests;
+  const b = (k, label) => `<button class="${v === k ? "on" : ""}" data-act="vote" data-id="${id}" data-v="${k}">${label}</button>`;
+  const opts = tuneOptions(s);
+  const followed = it.storylines.some(x => [id, ...(s.storyline?.items || []).map(m => m.id)].includes(x));
+  const pills = (kind) => opts.map(o => `<span class="pill ${kind}${it[kind].some(t => lc(t) === lc(o)) ? " on" : ""}" data-act="${kind}" data-v="${esc(o)}">${esc(o)}</span>`).join("");
+  return `<div class="votes">${b("up","👍 Useful")}${b("down","👎 Not for me")}${b("more","✨ More like this")}
+    <button class="tune" data-act="tune" data-id="${id}">⚙ Tune</button></div>
+    <div class="tuner" id="tune-${id}">
+      <span class="pill${followed ? " on" : ""}" data-act="storyline" data-id="${id}">🧵 ${followed ? "Following" : "Follow"} this storyline</span><br>
+      Follow: ${pills("follow")}<br>Mute: ${pills("mute")}</div>`;
 }
 function reactionBlock(r, compact) {
   if (!r || (!r.reviews?.length && !r.pulse)) return "";
@@ -218,14 +294,14 @@ function byline(s) {
   return `<div class="byline"><span>${esc(s.source)}${also}</span><a class="more" href="${url(s.link)}" target="_blank" rel="noopener">Read the full story →</a></div>`;
 }
 function mustCard(s, n) {
-  return `<article class="story${n === 1 ? " first" : ""}" id="s-${s.id}"><div class="num">${String(n).padStart(2,"0")}</div><div>
-    ${kicker(s)}<h2>${esc(s.headline)}</h2><p class="summary">${esc(s.summary)}</p>${byline(s)}${timeline(s)}${votes(s.id)}</div></article>`;
+  return `<article class="story${n === 1 ? " first" : ""}${READ.has(s.id) ? " read" : ""}" id="s-${s.id}" data-id="${s.id}"><div class="num">${String(n).padStart(2,"0")}</div><div>
+    ${kicker(s)}<h2>${esc(s.headline)}</h2><p class="summary">${esc(s.summary)}</p>${byline(s)}${timeline(s)}${votes(s)}</div></article>`;
 }
-function quickRow(s, n) {
-  return `<div class="quick" id="s-${s.id}" onclick="expand(event,this)"><div class="num">${String(n).padStart(2,"0")}</div><div>
-    <h4>${esc(s.headline)}</h4><p class="brief">${esc(s.brief)}</p>
-    <div class="meta">${esc(s.category)}${s.india === "tamil_nadu" ? " · Tamil Nadu" : ""}${s.storyline?.days > 1 ? " · update" : ""}</div>
-    <div class="open"><p class="summary">${esc(s.summary)}</p>${byline(s)}${timeline(s)}${votes(s.id)}</div></div></div>`;
+function quickRow(s, n, why) {
+  return `<div class="quick${READ.has(s.id) ? " read" : ""}" id="s-${s.id}" data-id="${s.id}" onclick="expand(event,this)"><div class="num">${String(n).padStart(2,"0")}</div><div>
+    <h4>${esc(s.headline)}${why ? `<span class="why">${esc(why)}</span>` : ""}</h4><p class="brief">${esc(s.brief)}</p>
+    <div class="meta">${[s.category, s.city, s.storyline?.days > 1 && "update"].filter(Boolean).map(esc).join(" · ")}</div>
+    <div class="open"><p class="summary">${esc(s.summary)}</p>${byline(s)}${timeline(s)}${votes(s)}</div></div></div>`;
 }
 
 /* ---------- views ---------- */
@@ -266,18 +342,60 @@ function header(d) {
   $("#next").onclick = () => go(i - 1 === 0 ? "#/" : `#/day/${INDEX.days[i - 1].date}`);
   setStatus(d);
 }
+let BRIEF_IDS = [];
 function viewToday(d, focus) {
   const must = d.stories.filter(s => s.tier === "must"), quick = d.stories.filter(s => s.tier !== "must");
+  const picks = quick.filter(s => !mutedBy(s)).map(s => [s, personal(s)]).filter(([, p]) => p.score > 0)
+    .sort((a, b) => b[1].score - a[1].score).slice(0, 4);
+  const pickIds = new Set(picks.map(([s]) => s.id));
+  const rest = quick.filter(s => !pickIds.has(s.id)), muted = rest.filter(mutedBy), others = rest.filter(s => !mutedBy(s));
+  BRIEF_IDS = [...must, ...picks.map(([s]) => s)].map(s => s.id);
+  const mins = Math.max(1, Math.round((must.reduce((a, s) => a + s.summary.split(" ").length, 0) + picks.length * 30) / 220));
+
   let n = 0, html = healthBanner(d);
-  if (d.opportunities?.length) html += `<section class="opps"><h3>For you · opportunities</h3>` + d.opportunities.map(o =>
-    `<div class="opp"><div class="t"><a href="${url(o.link)}" target="_blank" rel="noopener">${esc(o.title)} ↗</a></div>
-     <div class="d">${esc(o.detail)}</div><div class="m">${[o.where, o.deadline && "Deadline: " + o.deadline].filter(Boolean).map(esc).join(" · ")}</div></div>`).join("") + `</section>`;
-  html += `<h3 class="section">Must know <small>${must.length}</small></h3>` + must.map(s => mustCard(s, ++n)).join("");
-  const world = quick.filter(s => s.india === "none"), home = quick.filter(s => s.india !== "none");
-  if (world.length) html += `<h3 class="section">Quick hits · around the world <small>${world.length}</small></h3>` + world.map(s => quickRow(s, ++n)).join("");
-  if (home.length) html += `<h3 class="section">Quick hits · closer to home <small>${home.length}</small></h3>` + home.map(s => quickRow(s, ++n)).join("");
+  html += `<h3 class="section">Your ${mins}-minute brief <small>${BRIEF_IDS.length}</small></h3>
+    <p class="lede">The ${must.length} things worth knowing today${picks.length ? `, plus ${picks.length} picked for your focus` : ""}. Everything else is folded away below.</p>`;
+  html += must.map(s => mustCard(s, ++n)).join("");
+  if (picks.length) html += `<h3 class="section">Picked for you <small>${picks.length}</small></h3>` + picks.map(([s, p]) => quickRow(s, ++n, p.why)).join("");
+  if (d.opportunities?.length) html += `<section class="opps"><h3>Opportunities worth a look · ${d.opportunities.length}</h3>` + d.opportunities.map(o =>
+    `<details class="opp"><summary class="t">${esc(o.title)} <span class="m">${[o.where, o.deadline && "by " + o.deadline].filter(Boolean).map(esc).join(" · ")}</span></summary>
+     <div class="d">${esc(o.detail)} <a class="more" href="${url(o.link)}" target="_blank" rel="noopener">Details ↗</a></div></details>`).join("") + `</section>`;
+  html += `<div class="caught" id="caught"></div>`;
+
+  const world = others.filter(s => s.india === "none");
+  const byCity = c => others.filter(s => s.india !== "none" && (c === "Rest of India" ? !s.city : s.city === c));
+  let more = "";
+  if (world.length) more += `<h4 class="sub">Around the world · ${world.length}</h4>` + world.map(s => quickRow(s, ++n)).join("");
+  for (const c of [...INDEX.focus_cities, "Rest of India"]) {
+    const list = byCity(c);
+    if (list.length) more += `<h4 class="sub">${esc(c)} · ${list.length}</h4>` + list.map(s => quickRow(s, ++n)).join("");
+  }
+  if (muted.length) more += `<h4 class="sub">Muted · ${muted.length}</h4>` + muted.map(s => quickRow(s, ++n, "muted: " + mutedBy(s))).join("");
+  if (more) html += `<details class="rest"${focus ? " open" : ""}><summary>Everything else today · ${others.length + muted.length} stories</summary>${more}</details>`;
+
   $("#view").innerHTML = html;
+  updateCaught();
+  watchReading();
   if (focus) { const el = document.getElementById("s-" + focus); if (el) { el.classList.add("expanded"); el.scrollIntoView({block:"start"}); } }
+}
+function updateCaught() {
+  const box = document.getElementById("caught");
+  if (!box || !BRIEF_IDS.length) return;
+  const done = BRIEF_IDS.filter(id => READ.has(id)).length;
+  box.innerHTML = done >= BRIEF_IDS.length
+    ? `<b>You're caught up ✓</b><span>That's everything that matters today. The rest can wait, or open “Everything else” if you're curious.</span>`
+    : `<span>${done} of ${BRIEF_IDS.length} read</span><div class="bar-prog"><i style="width:${Math.round(100 * done / BRIEF_IDS.length)}%"></i></div>`;
+}
+let OBS;
+function watchReading() {
+  OBS?.disconnect();
+  const timers = new Map();
+  OBS = new IntersectionObserver(entries => entries.forEach(e => {
+    const id = e.target.dataset.id;
+    if (e.isIntersecting) timers.set(id, setTimeout(() => markRead(id), 2500));
+    else clearTimeout(timers.get(id));
+  }), {threshold: 0.6});
+  document.querySelectorAll("article.story[data-id]").forEach(el => OBS.observe(el));
 }
 function viewPeople(d) {
   const list = d.reviewed || [];
@@ -328,14 +446,112 @@ function viewSearch(q) {
     <span class="h">${mark(s.headline)}</span><span class="s">${mark(s.brief || "")}</span></a></li>`).join("")}</ul>`;
 }
 
+async function viewIndia(city, days) {
+  const data = await api(`/api/india?days=${days}`);
+  const cities = [...INDEX.focus_cities, "Rest of India"];
+  const chip = (c, label) => `<a href="#/india/${encodeURIComponent(c)}/${days}" class="${c === city ? "on" : ""}">${esc(label || c)}</a>`;
+  const per = d => `<a href="#/india/${encodeURIComponent(city)}/${d}" class="${d === days ? "on" : ""}">${d} days</a>`;
+  const max = Math.max(1, ...data.pulse.flatMap(p => p.categories.map(c => c[1])));
+  const cards = data.pulse.map(p => `<a class="pcard${p.city === city ? " on" : ""}" href="#/india/${encodeURIComponent(p.city)}/${days}">
+    <div class="c">${esc(p.city)}</div>
+    <div class="n"><b>${p.count}</b> stories · <span class="${p.trend > 0 ? "up" : p.trend < 0 ? "down" : ""}">${p.trend > 0 ? "▲ busier" : p.trend < 0 ? "▼ quieter" : "steady"}</span></div>
+    ${p.categories.map(([c, k]) => `<div class="cat">${esc(c)} · ${k}<i style="width:${Math.round(100 * k / max)}%"></i></div>`).join("")}
+    ${p.storylines.length ? `<div class="lines">${p.storylines.map(esc).join(" · ")}</div>` : ""}</a>`).join("");
+  const list = data.stories.filter(s => city === "all" || s.city === city);
+  $("#view").innerHTML = `<p class="lede">What's moving in AI across India over the last ${days} days. The pulse compares the recent half of the period with the earlier half.</p>
+    <div class="chips">${chip("all", "All India")}${cities.map(c => chip(c)).join("")}<span style="flex:1"></span>${per(7)}${per(30)}</div>
+    <div class="pulse-grid">${cards}</div>
+    <h3 class="section">${city === "all" ? "All India" : esc(city)} <small>${list.length} stories</small></h3>
+    ${list.length ? `<ul class="list">${list.map(s => `<li><a href="#/day/${s.date}/${s.id}"><span class="d">${short(s.date)} · ${esc(s.category)}${city === "all" ? " · " + esc(s.city) : ""}</span>
+      <span class="h">${esc(s.headline)}</span><span class="s">${esc(s.brief || "")}</span>
+      ${s.reactions?.pulse ? `<span class="s">💬 <i>${esc(s.reactions.pulse)}</i></span>` : ""}</a></li>`).join("")}</ul>`
+      : `<p class="empty">Nothing from ${esc(city)} in this period yet.</p>`}`;
+}
+function viewFocus() {
+  const it = INDEX.interests, t = INDEX.topics;
+  const mine = (kind) => it[kind].length
+    ? it[kind].map(x => `<span class="pill ${kind} on" data-act="${kind}" data-v="${esc(x)}">${esc(x)}<span class="x">×</span></span>`).join("")
+    : `<span style="font:500 13px var(--ui);color:var(--faint)">Nothing yet</span>`;
+  const sugg = (list) => list.filter(x => !it.follow.some(f => lc(f) === lc(x)) && !it.mute.some(m => lc(m) === lc(x)))
+    .map(x => `<span class="pill" data-act="follow" data-v="${esc(x)}">+ ${esc(x)}</span>`).join("");
+  const storyTitles = INDEX.search.filter(s => it.storylines.includes(s.id));
+  $("#view").innerHTML = `<div class="focus">
+    <p class="lede">Tell the agent what matters to you. Followed things are picked for your brief and favoured by tomorrow's editor; muted things are folded away. Saved instantly.</p>
+    <h4>Following</h4><div>${mine("follow")}</div>
+    <p style="margin-top:10px"><input id="addFollow" placeholder="Add a topic, company or technology…"> </p>
+    ${t.companies.length ? `<p>In the news lately: ${sugg([...t.technologies.slice(0, 10), ...t.companies.slice(0, 12), ...t.categories])}</p>` : ""}
+    <h4>Muted</h4><div>${mine("mute")}</div>
+    <p style="margin-top:10px"><input id="addMute" placeholder="Mute a topic, e.g. stock prices"></p>
+    <h4>Storylines you follow</h4>
+    <div>${storyTitles.length ? storyTitles.map(s => `<span class="pill on" data-act="storyline" data-id="${s.id}">🧵 ${esc(s.thread || s.headline)}<span class="x">×</span></span>`).join("")
+      : `<p>Tap “⚙ Tune → Follow this storyline” on any story to keep track of how it develops.</p>`}</div>
+    <h4>Cities to watch</h4>
+    <div>${INDEX.focus_cities.map(c => `<span class="pill${it.cities.includes(c) ? " on" : ""}" data-act="city" data-v="${esc(c)}">${esc(c)}</span>`).join("")}</div>
+    <p style="margin-top:8px">Watched cities get their own section, a place in the India pulse, and their best story each day.</p></div>`;
+  const add = (id, kind) => $(id).addEventListener("keydown", e => { if (e.key === "Enter" && e.target.value.trim()) toggleInterest(kind, e.target.value.trim(), true); });
+  add("#addFollow", "follow"); add("#addMute", "mute");
+}
+
 /* ---------- actions ---------- */
-function expand(e, el) { if (e.target.closest("a,button,.open")) return; el.classList.toggle("expanded"); }
+async function rerenderInPlace() {
+  const y = scrollY, open = [...document.querySelectorAll(".tuner.show, .quick.expanded, .timeline.show, details.rest[open]")]
+    .map(el => el.id || (el.matches("details") ? "__rest" : ""));
+  await route();
+  open.forEach(id => {
+    if (id === "__rest") document.querySelector("details.rest")?.setAttribute("open", "");
+    const el = id && document.getElementById(id);
+    if (el) el.classList.add(el.classList.contains("quick") ? "expanded" : "show");
+  });
+  scrollTo(0, y);
+}
+async function saveInterests() {
+  try { INDEX.interests = await api("/api/interests", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(INDEX.interests)}); }
+  catch { alert("Couldn't save. Is the app still running?"); }
+}
+async function toggleInterest(kind, value, forceOn) {
+  const it = INDEX.interests, list = kind === "city" ? it.cities : it[kind];
+  const i = list.findIndex(x => lc(x) === lc(value));
+  if (i >= 0 && !forceOn) list.splice(i, 1);
+  else if (i < 0) {
+    list.push(value);
+    const other = kind === "follow" ? it.mute : kind === "mute" ? it.follow : null;   // can't follow and mute at once
+    if (other) { const j = other.findIndex(x => lc(x) === lc(value)); if (j >= 0) other.splice(j, 1); }
+  }
+  await saveInterests(); rerenderInPlace();
+}
+async function toggleStoryline(id) {
+  const it = INDEX.interests;
+  const s = (DAY?.stories || []).find(x => x.id === id);
+  const chain = s ? [id, ...(s.storyline?.items || []).map(m => m.id)] : [id];
+  const has = it.storylines.filter(x => chain.includes(x));
+  it.storylines = has.length ? it.storylines.filter(x => !chain.includes(x)) : [...it.storylines, id];
+  await saveInterests(); rerenderInPlace();
+}
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-act]");
+  if (el) {
+    e.stopPropagation();
+    const act = el.dataset.act;
+    if (act === "vote") return vote(el, el.dataset.id, el.dataset.v);
+    if (act === "tune") return document.getElementById("tune-" + el.dataset.id)?.classList.toggle("show");
+    if (act === "follow" || act === "mute") return toggleInterest(act, el.dataset.v);
+    if (act === "city") return toggleInterest("city", el.dataset.v);
+    if (act === "storyline") return toggleStoryline(el.dataset.id);
+  }
+  const link = e.target.closest("a.more[target=_blank]");
+  const card = e.target.closest("[data-id]");
+  if (link && card) markRead(card.dataset.id);
+}, true);
+function expand(e, el) {
+  if (e.target.closest("a,button,.open,[data-act]")) return;
+  el.classList.toggle("expanded");
+  if (el.classList.contains("expanded")) markRead(el.dataset.id);
+}
 function toggleTl(e, id) { e.stopPropagation(); document.getElementById("tl-" + id).classList.toggle("show"); }
-async function vote(e, id, k) {
-  e.stopPropagation();
+async function vote(el, id, k) {
   const next = INDEX.feedback[id] === k ? null : k;
   INDEX.feedback[id] = next;
-  e.target.parentElement.querySelectorAll("button").forEach(b => b.classList.toggle("on", next && b.getAttribute("onclick").includes(`'${next}'`)));
+  el.parentElement.querySelectorAll('[data-act="vote"]').forEach(b => b.classList.toggle("on", b.dataset.v === next));
   try { await api("/api/feedback", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({id, vote: next})}); }
   catch { alert("Couldn't save that. Is the app still running?"); }
 }
@@ -348,7 +564,8 @@ async function loadDay(date) {
 }
 async function route() {
   const h = location.hash || "#/", parts = h.slice(2).split("/");
-  const tab = {"": "today", day: "today", people: "people", storylines: "storylines", storyline: "storylines", week: "week", archive: "archive"}[parts[0]] || "";
+  const tab = {"": "today", day: "today", india: "india", people: "people", storylines: "storylines", storyline: "storylines",
+               week: "week", archive: "archive", focus: "focus"}[parts[0]] || "";
   document.querySelectorAll("#tabs a").forEach(a => a.classList.toggle("on", a.dataset.t === tab));
   $("#healthbox").innerHTML = "";
   if (!INDEX.days.length) { $("#view").innerHTML = `<p class="empty">No editions yet. The first one arrives after the next 4 AM run, or start one from GitHub Actions.</p>`; setStatus(null); return; }
@@ -358,7 +575,9 @@ async function route() {
     if (parts[0] === "" || parts[0] === "day") { CUR = parts[1] || latest; viewToday(await loadDay(CUR), parts[2]); if (!parts[2]) scrollTo(0, 0); return; }
     if (parts[0] === "people") { viewPeople(await loadDay(parts[1] || CUR || latest)); return; }
     await loadDay(CUR || latest);
-    if (parts[0] === "storylines") viewStorylines();
+    if (parts[0] === "india") await viewIndia(decodeURIComponent(parts[1] || "all"), parts[2] === "30" ? 30 : 7);
+    else if (parts[0] === "focus") viewFocus();
+    else if (parts[0] === "storylines") viewStorylines();
     else if (parts[0] === "storyline") await viewStoryline(parts[1]);
     else if (parts[0] === "week") await viewWeek();
     else if (parts[0] === "archive") viewArchive();

@@ -89,3 +89,15 @@ def load_feedback() -> dict:
 
 def save_feedback(feedback: dict) -> None:
     _write(config.FEEDBACK_FILE, feedback)
+
+
+def load_interests() -> dict:
+    data = _read(config.INTERESTS_FILE, {})
+    for key in ("follow", "mute", "storylines"):
+        data.setdefault(key, [])
+    data.setdefault("cities", list(config.FOCUS_CITIES))
+    return data
+
+
+def save_interests(data: dict) -> None:
+    _write(config.INTERESTS_FILE, data)

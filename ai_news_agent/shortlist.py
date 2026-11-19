@@ -9,7 +9,7 @@ import re
 import time
 
 from . import config
-from .collect import Article, fetch_texts, india_relevance
+from .collect import Article, city_of, fetch_texts, india_relevance
 from .sources import COMPANIES
 
 STOP = set("a an the and or of to in on for with from by at as is are was be its it this that new how why what "
@@ -56,6 +56,7 @@ def cluster(articles: list[Article]) -> list[dict]:
     for s in stories:
         text = " ".join([s["title"], s["snippet"], *(c["title"] for c in s["coverage"])])
         s["india"] = india_relevance(text)
+        s["city"] = city_of(text)
         s["companies"] = [c for c, rx in COMPANY_RE if rx.search(text)][:3]
         s["score"] = _score(s, text)
         del s["_tokens"]
@@ -91,7 +92,10 @@ def shortlist(stories: list[dict], size: int = 70) -> list[dict]:
         per_company[c] = per_company.get(c, 0) + 1
         picked.append(s)
 
-    for s in [s for s in ranked if s["india"] == "tamil_nadu"][:10]:
+    for city in ("Bengaluru", "Chennai", "Hyderabad"):
+        for s in [s for s in ranked if s["city"] == city][:6]:
+            add(s)
+    for s in [s for s in ranked if s["india"] == "tamil_nadu"][:6]:
         add(s)
     for s in [s for s in ranked if s["india"] == "india"][:18]:
         add(s)
