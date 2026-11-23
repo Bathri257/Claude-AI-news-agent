@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio",
-    "render": "remotion render Story out/story.mp4 --concurrency=2"
+    "render": "remotion render Draft1 out/story.mp4 --concurrency=2"
   },
   "dependencies": {
     "@remotion/cli": "^4.0.242",
