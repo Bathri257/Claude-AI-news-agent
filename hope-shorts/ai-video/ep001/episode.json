@@ -1,0 +1,318 @@
+{
+  "id": "ep001",
+  "title": "Unga Naala Mudiyum",
+  "logline": "A lean man falls off his heavy bike on a rainy OMR morning; the whole city watches and moves on, until a small boy with the same scar helps him lift it.",
+  "takeaway": "Today, stop for someone the city walks past.",
+  "aspect_ratio": "9:16",
+  "target_length_s": 65,
+  "anchors": {
+    "STYLE": "Stylized 3D animated feature-film look: soft, rounded, appealing character design with expressive eyes, gentle subsurface skin shading, painterly cinematic lighting, shallow depth of field, subtle film grain.",
+    "STYLE_LIVE_ACTION": "Cinematic live-action, 35mm anamorphic look, natural skin texture, soft overcast light, shallow depth of field, subtle film grain.",
+    "FLASHBACK_STYLE": "Warm golden-hour memory: honey and amber tones, soft bloom and halation, sunbeams with floating dust, slightly hazy dreamy edges, camera at a child's eye level. {STYLE}",
+    "LOCATION": "the OMR IT corridor in Chennai, India: a busy two-lane road beside tall blue-grey glass office towers, rain trees, a black-and-yellow painted kerb, a paver footpath, wet dark asphalt with clear puddles, steady fine monsoon drizzle, overcast Monday morning, vehicles with headlights on",
+    "HERO": "A lean South Indian man in his late 30s with mild brown skin, short black hair, light stubble and a neat moustache, wearing a matte-black open-face half helmet with a thin blue stripe, a sky-blue textured cotton shirt with the sleeves rolled to the elbow and damp darker patches on the shoulders, grey trousers, a brown leather belt and brown leather shoes, with a small stitched scar on his left forearm.",
+    "KID": "A 7-year-old South Indian boy with warm brown skin, big bright eyes and a warm smile, wearing a bright yellow raincoat with the hood up and raindrops beading on the hood, a white school-uniform collar showing at the neck, white shorts, white socks and black school shoes, carrying a green school backpack in a fitted green rain cover, with a small stitched scar on his left forearm.",
+    "BIKE": "A dark-blue dual-purpose 150cc motorcycle with a white fuel tank, a black flat seat, a high front fender, fork gaiters, spoked wheels and knobby tyres, no logos or badges.",
+    "YOUNG": "The same boy as the kid reference, but on a sunny day in the 1990s: white school shirt and shorts, no raincoat, bare head with short black hair, a green school bag without a cover, the same small stitched scar on his left forearm.",
+    "OLDMAN": "An elderly South Indian man in a white shirt and white veshti, grey hair, thick round glasses and a kind, tired face.",
+    "NEGATIVE": "text, captions, subtitles, watermark, logo, brand names, extra fingers, deformed hands, distorted face, face morphing, identity drift, flicker, warped wheels, duplicate limbs, horizontal frame",
+    "MOOD": "Muted teal-grey monsoon palette; the only warm accents are the yellow raincoat, headlights and skin tones."
+  },
+  "references": [
+    {
+      "id": "REF_HERO",
+      "prompt": "Character reference sheet on a plain light-grey background. {HERO} Three full-body views side by side (front, three-quarter, side profile) in a neutral standing pose, plus a close-up of the face and a close-up of the forearm scar. Consistent proportions, 1.72 m tall adult. {STYLE}",
+      "aspect_ratio": "16:9"
+    },
+    {
+      "id": "REF_KID",
+      "prompt": "Character reference sheet on a plain light-grey background. {KID} Three full-body views side by side (front, three-quarter, side profile) in a neutral standing pose, plus a close-up of the smiling face with raindrops on the hood and a close-up of the forearm scar. 1.28 m tall child. {STYLE}",
+      "aspect_ratio": "16:9"
+    },
+    {
+      "id": "REF_BIKE",
+      "prompt": "Product-style reference sheet on a plain light-grey background. {BIKE} Side view, three-quarter front view and three-quarter rear view. {STYLE}",
+      "aspect_ratio": "16:9"
+    },
+    {
+      "id": "REF_LOCATION",
+      "prompt": "Environment concept art, no people in the foreground: {LOCATION}. Wide street-level view showing both lanes, the kerb, the footpath with a bus stop, and the glass towers rising into the haze. {STYLE} {MOOD}",
+      "aspect_ratio": "9:16"
+    }
+  ],
+  "shots": [
+    {
+      "id": "S01",
+      "duration_s": 5,
+      "key": false,
+      "refs": [
+        "REF_LOCATION"
+      ],
+      "purpose": "Establish the place, the weather and the busy indifference of the city.",
+      "start_frame": "Slow aerial drone view looking down on {LOCATION}. Traffic crawls in both lanes: a green-and-cream city bus, autorickshaws, scooters with riders in raincoats. Umbrellas on the footpath; puddles reflect the grey sky and the towers. {STYLE} {MOOD}",
+      "motion": "The camera slowly descends and pushes forward toward the road. Rain falls diagonally, traffic moves steadily, puddles ripple.",
+      "camera": "drone descend + push in",
+      "caption": "OMR · MONDAY · 8:40 AM",
+      "caption_style": "title",
+      "sfx": "steady rain, distant traffic hiss, horns"
+    },
+    {
+      "id": "S02",
+      "duration_s": 4,
+      "key": false,
+      "refs": [
+        "REF_KID",
+        "REF_LOCATION"
+      ],
+      "purpose": "Plant the kid early, so his return feels earned, not convenient.",
+      "start_frame": "Street-level medium shot of a small boy standing at the kerb waiting to cross, holding his bag straps, raindrops beading on his hood, looking left at the traffic. Blurred vehicles pass in the foreground; the road and glass towers are softly out of focus behind him. The boy: {KID} Setting: {LOCATION}. {STYLE} {MOOD}",
+      "motion": "The boy blinks and shifts his weight, watching the cars. Rain drips from the edge of his hood. Foreground traffic streaks past. Slight handheld drift.",
+      "camera": "static, slight handheld",
+      "caption": "",
+      "sfx": "rain on raincoat, passing cars"
+    },
+    {
+      "id": "S03",
+      "duration_s": 5,
+      "key": true,
+      "refs": [
+        "REF_HERO",
+        "REF_BIKE"
+      ],
+      "purpose": "Meet him: tired, a little out of his depth, carrying a bike too heavy for him.",
+      "start_frame": "Side tracking shot at wheel height of a lean man riding a motorcycle in the left lane, squinting against the drizzle, shoulders tense; the bike looks slightly too big and heavy for his lean frame. Motion-blurred traffic and glass towers behind. The man: {HERO} The motorcycle: {BIKE} {STYLE} {MOOD}",
+      "motion": "The camera tracks alongside at his speed. The background streaks past. Rain hits his face; the front wheel throws a fine spray. He quickly wipes water from his eyes with one hand, then grips the handlebar again.",
+      "camera": "side tracking",
+      "caption": "His bike was always a little too heavy for him.",
+      "sfx": "engine idle hum, tyres on wet road"
+    },
+    {
+      "id": "S04",
+      "duration_s": 3,
+      "key": false,
+      "refs": [
+        "REF_BIKE"
+      ],
+      "purpose": "The hidden pothole. Show the cause, not the crash.",
+      "start_frame": "Low-angle close-up of the spoked front wheel of a dark-blue motorcycle rolling toward a deep rain-filled pothole hidden inside a puddle on wet asphalt; raindrops hit the puddle. {STYLE} {MOOD}",
+      "motion": "The wheel rolls forward and drops into the pothole. A burst of muddy water splashes toward the camera and the frame jolts. Cut on impact.",
+      "camera": "low static, jolt",
+      "caption": "",
+      "sfx": "thud, splash, then sudden silence"
+    },
+    {
+      "id": "S05",
+      "duration_s": 4,
+      "key": true,
+      "refs": [
+        "REF_HERO",
+        "REF_BIKE",
+        "REF_LOCATION"
+      ],
+      "purpose": "Aftermath. Nobody slows down.",
+      "start_frame": "Wide shot from the footpath: a motorcycle lying on its side in the road, its front wheel still slowly spinning; the rider sits on the wet asphalt beside it, pushing himself up on one arm. Traffic passes around him without stopping. The man: {HERO} The motorcycle: {BIKE} Setting: {LOCATION}. {STYLE} {MOOD}",
+      "motion": "He pushes himself up to sitting and shakes rain off his hand. Cars and an autorickshaw pass behind him without slowing. The front wheel slows to a stop.",
+      "camera": "static wide",
+      "caption": "",
+      "sfx": "rain returns, traffic keeps passing"
+    },
+    {
+      "id": "S06",
+      "duration_s": 5,
+      "key": false,
+      "refs": [
+        "REF_HERO"
+      ],
+      "purpose": "He isn't hurt; his pride is.",
+      "start_frame": "Medium shot of a man standing in the road, mud on the knee of his grey trousers, shirt damp, brushing dirt off his trousers, more embarrassed than hurt. Busy rainy road out of focus behind him. The man: {HERO} {STYLE} {MOOD}",
+      "motion": "He brushes his trousers twice and straightens up, then slowly lifts his head and looks around.",
+      "camera": "static medium",
+      "caption": "He wasn't hurt.",
+      "sfx": "rain, his breathing"
+    },
+    {
+      "id": "S07",
+      "duration_s": 5,
+      "key": true,
+      "refs": [
+        "REF_LOCATION"
+      ],
+      "purpose": "The stare: everyone sees, no one stops.",
+      "start_frame": "Point of view across a rainy road: people under black umbrellas at a bus stop on the footpath, all looking straight at the camera. A woman in a magenta kurta, an office worker in a white shirt, a security guard. Traffic blurs between us and them. Setting: {LOCATION}. {STYLE} {MOOD}",
+      "motion": "Slow motion. They stare for a moment, then one by one look away and back to their phones. Traffic streaks past in the foreground.",
+      "camera": "POV, slow motion",
+      "caption": "But the whole city saw… and kept moving.",
+      "sfx": "muffled, slowed traffic; rain fades low"
+    },
+    {
+      "id": "S08",
+      "duration_s": 4,
+      "key": false,
+      "refs": [
+        "REF_HERO",
+        "REF_BIKE"
+      ],
+      "purpose": "First attempt.",
+      "start_frame": "Medium three-quarter shot of a man bending over a motorcycle that lies on the wet road, both hands on the handlebar, about to lift it. The man: {HERO} The motorcycle: {BIKE} {STYLE} {MOOD}",
+      "motion": "He pulls hard. The bike rises a little, then slides back down onto the road. He exhales.",
+      "camera": "static",
+      "caption": "Once.",
+      "sfx": "metal scrape, exhale"
+    },
+    {
+      "id": "S09",
+      "duration_s": 4,
+      "key": false,
+      "refs": [
+        "REF_HERO",
+        "REF_BIKE"
+      ],
+      "purpose": "Second attempt. The low point.",
+      "start_frame": "Low close shot of a man's face, straining, rain running down from under his half helmet, teeth clenched; the white tank of a motorcycle in the foreground. The man: {HERO} {STYLE} {MOOD}",
+      "motion": "He strains; the bike lifts halfway and his arms shake; it drops again. He closes his eyes for a second.",
+      "camera": "low close-up",
+      "caption": "Twice.",
+      "sfx": "strain, bike drops, rain louder"
+    },
+    {
+      "id": "S10",
+      "duration_s": 5,
+      "key": true,
+      "refs": [
+        "REF_HERO",
+        "REF_KID"
+      ],
+      "purpose": "The third try: a small hand with the same scar.",
+      "start_frame": "Extreme close-up: an adult man's brown hand grips the black seat of a fallen motorcycle, a small stitched scar on his forearm below a rolled sky-blue sleeve. From the left, a small child's hand in a yellow raincoat sleeve presses flat against the seat beside his, with an identical small stitched scar on the same place on the forearm. Rain beads on both arms. {STYLE} {MOOD}",
+      "motion": "Both hands push together and the seat starts to rise. Raindrops tremble on the skin. A very slow push-in on the two scars.",
+      "camera": "macro, slow push in",
+      "caption": "",
+      "sfx": "music enters: single soft piano note"
+    },
+    {
+      "id": "S11",
+      "duration_s": 4,
+      "key": true,
+      "refs": [
+        "REF_KID"
+      ],
+      "purpose": "The line.",
+      "start_frame": "Close-up of a small boy pushing a motorcycle with both hands, looking up at the man with a warm, determined smile, his hood dripping. Rainy road softly blurred behind. The boy: {KID} {STYLE} {MOOD}",
+      "motion": "He looks up, smiles wide and speaks encouragingly, with a small nod. Raindrops fall from the edge of his hood.",
+      "camera": "static close-up",
+      "caption": "“Come on anna, unga naala mudiyum!”",
+      "caption_sub": "Come on, brother. You can do it.",
+      "caption_style": "dialogue",
+      "voice": "Child voice, Tamil, bright and sure: \"Come on anna, unga naala mudiyum!\"",
+      "sfx": "music builds gently"
+    },
+    {
+      "id": "S12",
+      "duration_s": 5,
+      "key": true,
+      "refs": [
+        "REF_HERO",
+        "REF_KID",
+        "REF_BIKE",
+        "REF_LOCATION"
+      ],
+      "purpose": "Together, it comes up. The weather turns with him.",
+      "start_frame": "Wide shot: a man and a small boy lift a motorcycle upright together in the road. The drizzle is easing and a break in the clouds lets warm light fall across the wet road. The man: {HERO} The boy: {KID} The motorcycle: {BIKE} Setting: {LOCATION}. {STYLE} {MOOD}",
+      "motion": "The bike comes fully upright and the man steadies it on its stand. The rain thins; warm light spreads across the puddles.",
+      "camera": "static wide, slight push in",
+      "caption": "It was just a kid. Maybe eight years old.",
+      "sfx": "music swells softly, rain thins"
+    },
+    {
+      "id": "S13",
+      "duration_s": 3,
+      "key": false,
+      "refs": [
+        "REF_HERO"
+      ],
+      "purpose": "The trigger into memory (the Ratatouille move).",
+      "start_frame": "Extreme close-up of a man's eyes under the brim of a black half helmet, rain on his eyelashes, looking down; a tiny yellow reflection of a raincoat in his pupils. The man: {HERO} {STYLE} {MOOD}",
+      "motion": "A very slow push into his eyes. A soft warm light flickers in his pupils.",
+      "camera": "extreme close-up, push in",
+      "caption": "",
+      "sfx": "all sound drops out to near-silence"
+    },
+    {
+      "id": "S14",
+      "duration_s": 6,
+      "key": true,
+      "refs": [
+        "REF_KID"
+      ],
+      "purpose": "The memory: he used to be this kid.",
+      "start_frame": "A sunny 1990s small-town street in Tamil Nadu with tiled-roof houses, coconut palms and a temple tower in the haze. A young boy helps an old man lift his fallen black bicycle; oranges are spilled on the dusty road; both are smiling. The boy: {YOUNG} The old man: {OLDMAN} {FLASHBACK_STYLE}",
+      "motion": "The boy and the old man raise the bicycle together; the old man pats the boy's head. Dust floats in the sunbeams. Gentle slow motion.",
+      "camera": "child-eye-level, gentle drift",
+      "caption": "He remembered a boy who used to stop for strangers.",
+      "caption_style": "memory",
+      "sfx": "warm room tone, birds, distant temple bell"
+    },
+    {
+      "id": "S15",
+      "duration_s": 3,
+      "key": false,
+      "refs": [
+        "REF_HERO"
+      ],
+      "purpose": "Back to now, changed.",
+      "start_frame": "Close-up of a man's face back in the light rain, softened, eyes wet, the start of a small smile. The man: {HERO} {STYLE} {MOOD}",
+      "motion": "He breathes out and smiles slowly. The rain continues gently.",
+      "camera": "static close-up",
+      "caption": "",
+      "sfx": "hard cut back to rain, softer"
+    },
+    {
+      "id": "S16",
+      "duration_s": 4,
+      "key": false,
+      "refs": [
+        "REF_HERO",
+        "REF_KID",
+        "REF_LOCATION"
+      ],
+      "purpose": "The kid finally crosses, because the traffic stops for him.",
+      "start_frame": "Wide shot: a small boy waves goodbye as he crosses at a zebra crossing; the traffic has stopped for him; a man stands beside his upright motorcycle, watching. The boy: {KID} The man: {HERO} Setting: {LOCATION}. {STYLE} {MOOD}",
+      "motion": "The boy waves over his shoulder and skips across. The man raises his hand and waves back.",
+      "camera": "static wide",
+      "caption": "",
+      "sfx": "music continues"
+    },
+    {
+      "id": "S17",
+      "duration_s": 4,
+      "key": true,
+      "refs": [
+        "REF_HERO"
+      ],
+      "purpose": "The ripple: he passes it on.",
+      "start_frame": "Later that day, in golden late-afternoon light after the rain: a man in a damp sky-blue shirt holds his umbrella over an elderly woman as she slowly crosses a busy road; the wet road glows. The man: {HERO} {STYLE}",
+      "motion": "They cross slowly; he matches her pace. She looks up at him and smiles.",
+      "camera": "slow tracking",
+      "caption": "One small push travels further than you think.",
+      "sfx": "music resolves"
+    },
+    {
+      "id": "S18",
+      "duration_s": 4,
+      "key": false,
+      "refs": [],
+      "purpose": "Visual full stop, under the takeaway card.",
+      "start_frame": "Macro shot of a single raindrop falling into a clear puddle on asphalt, warm light reflected in the water. {STYLE}",
+      "motion": "The drop hits and concentric ripples spread outward in slow motion until they fill the frame.",
+      "camera": "macro, static",
+      "caption": "ONE SMALL THING · Today, stop for someone the city walks past.",
+      "caption_style": "endcard",
+      "sfx": "single drop, last piano note"
+    }
+  ],
+  "audio": {
+    "music": "Gentle solo piano or veena, enters at S10, swells at S12, resolves at S17. Royalty-free (YouTube Audio Library or a CC0 source).",
+    "voice": "Only S11. Record a real child (with a parent's consent), or use a text-to-speech voice that handles Tamil, then sync it to the clip.",
+    "ambience": "Continuous rain and OMR traffic bed under S01-S13; silence at S13; warm room tone in S14; softer rain from S15."
+  }
+}
